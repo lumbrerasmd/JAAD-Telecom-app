@@ -3,13 +3,14 @@ name: Compilar APK de JAAD Telecom
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Descargar el proyecto
+        uses: actions/checkout@v4
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -25,19 +26,25 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Agregar plataforma Android
+      - name: Crear el proyecto de Android
         run: npx cap add android
 
-      - name: Sincronizar Capacitor
+      - name: Sincronizar con Capacitor
         run: npx cap sync android
+
+      - name: Poner el logo de JAAD Telecom como ícono
+        run: |
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          find android/app/src/main/res -maxdepth 1 -type d -name "mipmap-*" -exec rm -f {}/ic_launcher.webp {}/ic_launcher_round.webp {}/ic_launcher_foreground.webp \;
+          cp -r android-icons/* android/app/src/main/res/
 
       - name: Dar permisos de ejecución
         run: chmod +x android/gradlew
 
-      - name: Compilar APK
+      - name: Compilar el APK
         run: cd android && ./gradlew assembleDebug
 
-      - name: Subir APK
+      - name: Subir el APK ya compilado
         uses: actions/upload-artifact@v4
         with:
           name: jaad-telecom-apk

@@ -1,0 +1,9 @@
+{
+  "appId": "com.jaadtelecom.app",
+  "appName": "JAAD Telecom",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

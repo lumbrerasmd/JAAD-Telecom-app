@@ -1,0 +1,74 @@
+COMPILAR EL APK EN LA NUBE CON GITHUB (GRATIS, SIN ANDROID STUDIO)
+=====================================================================
+
+Esto hace que las computadoras de GitHub armen tu APK por ti. Solo
+necesitas tu laptop normal e internet — nada se instala ni se compila
+en tu máquina.
+
+PASO 1 — Crear cuenta gratis en GitHub
+-------------------------------------------------------------
+1. Ve a https://github.com
+2. "Sign up" — crea tu cuenta (gratis, solo pide correo y contraseña)
+
+PASO 2 — Crear el repositorio (donde van a vivir tus archivos)
+-------------------------------------------------------------
+1. Ya con sesión iniciada, arriba a la derecha toca el "+" → "New repository"
+2. Nombre: jaad-telecom-app  (o el que quieras)
+3. Puedes dejarlo "Private" (privado, solo tú lo ves)
+4. NO marques ninguna casilla de "Add README" etc.
+5. Dale "Create repository"
+
+PASO 3 — Subir los archivos de esta carpeta
+-------------------------------------------------------------
+1. En la página del repositorio recién creado, busca el link que dice
+   "uploading an existing file" (o el botón "Add file" → "Upload files")
+2. En tu computadora, entra a esta carpeta "jaad-android" que te mandé
+3. Selecciona TODO lo que hay adentro (incluida la carpeta oculta
+   ".github" — en Windows, si no la ves, activa "Ver archivos ocultos"
+   en el Explorador de archivos) y arrástralo a la página de GitHub
+4. Espera a que termine de subir (el index.html pesa como 1.5 MB,
+   puede tardar un poco según tu internet)
+5. Abajo dale "Commit changes" (déjalo con el texto que trae por
+   default, solo dale click al botón verde)
+
+IMPORTANTE: la carpeta ".github/workflows" tiene que quedar exactamente
+con ese nombre y esa posición dentro del repositorio — es la que le
+dice a GitHub que tiene que compilar el APK. Si arrastraste toda la
+carpeta de una vez, ya debería estar bien.
+
+PASO 4 — Ver que esté compilando
+-------------------------------------------------------------
+1. En la página de tu repositorio, arriba hay una pestaña "Actions"
+2. Deberías ver que ya empezó a correr algo solo (un punto amarillo
+   girando = está compilando). Si no ves nada, entra al workflow
+   "Compilar APK de JAAD Telecom" y dale al botón "Run workflow"
+3. Espera unos 3-5 minutos. El punto amarillo se pone verde ✔️
+   cuando termina bien (o rojo ✗ si algo falló — mándame captura)
+
+PASO 5 — Descargar el APK ya compilado
+-------------------------------------------------------------
+1. Toca sobre esa corrida ya terminada (la que tiene el ✔️ verde)
+2. Baja hasta la sección "Artifacts"
+3. Descarga "jaad-telecom-apk" — es un .zip
+4. Descomprímelo — adentro está el archivo "app-debug.apk"
+
+PASO 6 — Pasarlo al celular e instalar
+-------------------------------------------------------------
+1. Manda ese .apk a tu celular (WhatsApp, Drive, cable USB, lo que sea)
+2. Tócalo en el celular
+3. Si Android pregunta por permiso de "instalar apps de fuentes
+   desconocidas", actívalo solo para esa instalación
+4. Instala normal
+
+PASO 7 — Conectarlo con tu servidor
+-------------------------------------------------------------
+Al abrir la app instalada, ve a Configuración → "Dirección del
+servidor" y escribe la IP de tu PC-servidor (ej. http://192.168.1.50:3000),
+luego "Guardar y probar conexión" — igual que ya te expliqué antes.
+
+CADA VEZ QUE QUIERAS UNA VERSIÓN NUEVA DEL APK
+-------------------------------------------------------------
+Si más adelante te doy una versión actualizada del index.html:
+sube ese archivo nuevo a la misma carpeta "www" dentro de tu
+repositorio de GitHub (reemplazando al viejo) y listo — se vuelve a
+compilar solo, y repites del Paso 4 en adelante.

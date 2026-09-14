@@ -1,0 +1,92 @@
+APP DE ANDROID PARA JAAD TELECOM — INSTRUCCIONES (WINDOWS)
+=============================================================
+
+Esto convierte tu app en un APK real, instalable en cualquier celular
+Android, con su propio ícono, sin barra de navegador.
+
+Lo puedes hacer en la MISMA pc donde tienes el servidor, o en cualquier
+otra — no tiene que ser la misma.
+
+REQUISITOS (se instalan una sola vez, todo gratis)
+-------------------------------------------------------------
+1. Node.js — si ya lo instalaste para el servidor, ya lo tienes.
+   Si no: https://nodejs.org (versión LTS)
+
+2. Android Studio — https://developer.android.com/studio
+   Descárgalo e instálalo normal (dale "Siguiente" a todo,
+   incluido cuando te ofrezca instalar el "Android SDK", acéptalo).
+   Es un instalador grande, puede tardar un rato.
+
+PASO 1 — Preparar la carpeta
+-------------------------------------------------------------
+1. Copia esta carpeta "jaad-android" a tu PC (Escritorio o Documentos)
+2. Ábrela, y en la barra de direcciones de la carpeta escribe:  cmd
+   y presiona Enter (abre una consola ya parada en esta carpeta)
+
+PASO 2 — Instalar Capacitor (una sola vez)
+-------------------------------------------------------------
+En esa consola, escribe uno por uno (espera a que termine cada uno):
+
+   npm install
+
+   npx cap init "JAAD Telecom" "com.jaadtelecom.app" --web-dir=www
+
+   (si te pregunta algo, solo presiona Enter para dejar los valores
+   que ya vienen puestos)
+
+   npx cap add android
+
+Esto crea una carpeta nueva llamada "android" — es el proyecto nativo,
+no la toques a mano.
+
+PASO 3 — Sincronizar y abrir en Android Studio
+-------------------------------------------------------------
+   npx cap sync android
+   npx cap open android
+
+Esto abre Android Studio con tu proyecto. La primera vez que abre,
+Android Studio va a "indexar" el proyecto — espera a que la barra de
+progreso de abajo termine (puede tardar varios minutos).
+
+PASO 4 — Generar el APK
+-------------------------------------------------------------
+Dentro de Android Studio, en el menú de arriba:
+
+   Build  →  Build Bundle(s) / APK(s)  →  Build APK(s)
+
+Espera a que termine (una notificación abajo a la derecha dirá
+"APK(s) generated successfully"). Ahí mismo hay un link que dice
+"locate" — te lleva directo a la carpeta donde quedó el archivo:
+
+   android/app/build/outputs/apk/debug/app-debug.apk
+
+Ese archivo .apk es tu app. Pásalo al celular (por USB, WhatsApp,
+Google Drive, como prefieras).
+
+PASO 5 — Instalarlo en el celular
+-------------------------------------------------------------
+1. En el celular, toca el archivo .apk
+2. Android va a pedir permiso para "instalar apps de fuentes
+   desconocidas" — actívalo solo para esa app/instalación
+3. Instala normal
+
+PASO 6 — Conectarla con tu servidor
+-------------------------------------------------------------
+La primera vez que abras la app instalada:
+1. Ve al menú → Configuración
+2. En "Dirección del servidor" escribe la IP de tu PC-servidor,
+   por ejemplo:   http://192.168.1.50:3000
+   (la misma dirección que usarías si entraras desde el navegador
+   del celular, por tu VPN)
+3. Toca "Guardar y probar conexión"
+
+Si dice conectado, ya está lista: cada aparato con esta app va a ver
+y compartir la misma información con el servidor.
+
+NOTA SOBRE ESTE APK "DE PRUEBA"
+-------------------------------------------------------------
+El archivo que sale en el Paso 4 es un APK de "debug" — instala y
+funciona perfecto para uso interno de tu equipo. Si en el futuro
+quieres subirlo a la Play Store de verdad, se necesita un paso extra
+(firmarlo con una llave propia) — dime cuando llegues a eso y te
+ayudo con ese paso.

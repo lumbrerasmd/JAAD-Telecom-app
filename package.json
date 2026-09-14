@@ -1,0 +1,17 @@
+{
+  "name": "jaad-telecom-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App móvil de JAAD Telecom (Android, vía Capacitor)",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open-android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/android": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}

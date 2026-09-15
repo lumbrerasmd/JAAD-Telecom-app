@@ -164,6 +164,7 @@
   .fiber-action{color:#8FC0FF;cursor:pointer;font-weight:600;text-decoration:underline;}
   .temp-fiber-point{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--navy);}
 
+  #bottom-nav{display:none;}
   #stats-panel{
     position:absolute;bottom:16px;right:16px;z-index:500;padding:14px 16px;width:190px;
   }
@@ -297,6 +298,22 @@
     #stats-panel{width:150px;padding:10px 12px;}
     #sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1400;}
     #sidebar-backdrop.open{display:block;}
+    #bottom-nav{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:1600;
+      background:var(--navy);border-top:1px solid rgba(255,255,255,.08);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+    }
+    #bottom-nav .bn-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:2px;padding:5px 2px;color:#8FA0C2;font-size:10.5px;font-weight:600;cursor:pointer;
+      border-radius:10px;
+    }
+    #bottom-nav .bn-item.active{color:#fff;background:rgba(255,255,255,.08);}
+    #bottom-nav .bn-ico{font-size:19px;line-height:1;}
+    #map-wrap{padding-bottom:58px;}
+    #hint-bar, #fiber-hint-bar{bottom:74px;}
+    #stats-panel{bottom:74px;}
+    .leaflet-bottom{bottom:58px !important;}
   }
 
   ::-webkit-scrollbar{width:6px;}
@@ -424,6 +441,31 @@
 </div>
 
 <div id="sidebar-backdrop"></div>
+
+<div id="bottom-nav">
+  <div class="bn-item active" id="bn-mapa"><span class="bn-ico">◈</span><span>Mapa</span></div>
+  <div class="bn-item" id="bn-clientes"><span class="bn-ico">☺</span><span>Clientes</span></div>
+  <div class="bn-item" id="bn-ordenes"><span class="bn-ico">🧰</span><span>Órdenes</span></div>
+  <div class="bn-item" id="bn-mas"><span class="bn-ico">☰</span><span>Más</span></div>
+</div>
+
+<div id="clientes-overlay" class="big-overlay">
+  <div class="big-box">
+    <div id="modal-head">
+      <h3>Clientes</h3>
+      <button id="clientes-close">✕</button>
+    </div>
+    <div class="big-body">
+      <div class="field-row">
+        <input type="text" id="clientes-buscar" placeholder="Buscar cliente por nombre o colonia…">
+      </div>
+      <div id="clientes-list"></div>
+    </div>
+    <div id="modal-foot">
+      <button class="btn-secondary" id="clientes-close2">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <div id="modal-overlay">
   <div id="modal-box">
@@ -2049,13 +2091,14 @@
     });
   }
 
-  document.getElementById('nav-instalaciones').addEventListener('click', ()=>{
+  function openInstalaciones(){
     loadOrders();
     installsTab = 'Pendiente';
     document.querySelectorAll('.install-tab').forEach(t=>t.classList.toggle('active', t.dataset.installtab===installsTab));
     renderInstallsList();
     installsOverlay.classList.add('open');
-  });
+  }
+  document.getElementById('nav-instalaciones').addEventListener('click', openInstalaciones);
   document.getElementById('installs-close').addEventListener('click', ()=> installsOverlay.classList.remove('open'));
   document.getElementById('installs-close2').addEventListener('click', ()=> installsOverlay.classList.remove('open'));
   document.querySelectorAll('.install-tab').forEach(tab=>{
@@ -2064,6 +2107,65 @@
       document.querySelectorAll('.install-tab').forEach(t=>t.classList.toggle('active', t===tab));
       renderInstallsList();
     });
+  });
+
+  // ---------- Clientes (vista rápida) ----------
+  const clientesOverlay = document.getElementById('clientes-overlay');
+  function renderClientesList(filtro){
+    const q = (filtro || '').trim().toLowerCase();
+    const cont = document.getElementById('clientes-list');
+    const lista = elements.filter(el => el.type === 'cliente' &&
+      ((el.nombre||'').toLowerCase().includes(q) || (el.colonia||'').toLowerCase().includes(q))
+    );
+    if(lista.length === 0){
+      cont.innerHTML = '<div class="search-empty">No hay clientes que coincidan.</div>';
+      return;
+    }
+    cont.innerHTML = lista.map(el => `
+      <div class="list-card">
+        <div class="list-card-head"><span class="list-card-title">${el.nombre}</span></div>
+        <div class="list-card-meta">${el.colonia || 'Sin colonia registrada'}</div>
+        <div class="list-card-actions">
+          <button class="advance" data-vermapa="${el.id}">📍 Ver en mapa</button>
+        </div>
+      </div>
+    `).join('');
+    cont.querySelectorAll('[data-vermapa]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const el = elements.find(e=>e.id===btn.dataset.vermapa);
+        if(!el) return;
+        clientesOverlay.classList.remove('open');
+        showApp();
+        map.setView([el.lat, el.lng], 18);
+        const m = markers[el.id];
+        if(m) m.openPopup();
+      });
+    });
+  }
+  document.getElementById('clientes-close').addEventListener('click', ()=> clientesOverlay.classList.remove('open'));
+  document.getElementById('clientes-close2').addEventListener('click', ()=> clientesOverlay.classList.remove('open'));
+  document.getElementById('clientes-buscar').addEventListener('input', (e)=> renderClientesList(e.target.value));
+
+  // ---------- Barra inferior (móvil) ----------
+  function setBottomNavActive(id){
+    document.querySelectorAll('#bottom-nav .bn-item').forEach(b=> b.classList.toggle('active', b.id===id));
+  }
+  document.getElementById('bn-mapa').addEventListener('click', ()=>{
+    showApp();
+    setBottomNavActive('bn-mapa');
+  });
+  document.getElementById('bn-clientes').addEventListener('click', ()=>{
+    renderClientesList('');
+    document.getElementById('clientes-buscar').value = '';
+    clientesOverlay.classList.add('open');
+    setBottomNavActive('bn-clientes');
+  });
+  document.getElementById('bn-ordenes').addEventListener('click', ()=>{
+    openInstalaciones();
+    setBottomNavActive('bn-ordenes');
+  });
+  document.getElementById('bn-mas').addEventListener('click', ()=>{
+    openSidebar();
   });
   document.getElementById('of-guardar').addEventListener('click', ()=>{
     const orden = {
@@ -2097,6 +2199,7 @@
     homeScreen.classList.add('hidden');
     appEl.classList.remove('hidden');
     setTimeout(()=> map.invalidateSize(), 60);
+    if(typeof setBottomNavActive === 'function') setBottomNavActive('bn-mapa');
   }
   function showHome(){
     appEl.classList.add('hidden');

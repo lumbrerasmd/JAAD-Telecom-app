@@ -197,7 +197,7 @@
   #modal-body{padding:16px 20px;}
   .field-row{margin-bottom:14px;}
   .field-row label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
-  .field-row input[type=text], .field-row select, .field-row input[type=number]{
+  .field-row input[type=text], .field-row select, .field-row input[type=number], .field-row input[type=tel], .field-row input[type=url]{
     width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;
     font-family:inherit;background:var(--bg);color:var(--text);
   }
@@ -248,6 +248,12 @@
   .list-card-actions span{font-size:12px;font-weight:600;color:var(--blue);cursor:pointer;}
   .list-card-actions span.danger{color:#D64550;}
   .list-card select{font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);font-family:inherit;}
+  .install-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .install-tab{flex:1;text-align:center;padding:9px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--text-dim);border:1px solid var(--border);}
+  .install-tab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .install-tab .n{margin-left:4px;opacity:.85;}
+  .list-card-actions a.gomap{background:var(--blue-dim);color:var(--blue);padding:6px 10px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;}
+  .list-card-actions button.advance{background:var(--green);color:#fff;border:none;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
   .active-tag{font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-bg);padding:3px 8px;border-radius:20px;}
 
   #home-screen{
@@ -325,6 +331,7 @@
 
     <div class="nav-item" id="nav-inicio"><span class="ico">⌂</span> Inicio</div>
     <div class="nav-item active" id="nav-mapa"><span class="ico">◈</span> Mapa</div>
+    <div class="nav-item" id="nav-instalaciones"><span class="ico">🧰</span> Instalaciones</div>
     <div class="nav-item" id="nav-proyectos"><span class="ico">▤</span> Proyectos</div>
     <div class="nav-item"><span class="ico">☺</span> Clientes</div>
 
@@ -370,6 +377,7 @@
         <div class="layer-row"><input type="checkbox" checked data-layer="caja"><span class="layer-swatch" style="background:#F5A623"></span> Cajas</div>
         <div class="layer-row"><input type="checkbox" checked data-layer="cliente"><span class="layer-swatch" style="background:#8B5CF6"></span> Clientes</div>
         <div class="layer-row"><input type="checkbox" checked data-layer="crucero"><span class="layer-swatch" style="background:#D64550"></span> Cruceros</div>
+        <div class="layer-row"><input type="checkbox" checked data-layer="sitio"><span class="layer-swatch" style="background:#0EA5A5;border-radius:2px;"></span> Sitios / POP</div>
         <div class="layer-row line-row"><input type="checkbox" checked data-lline="troncal"><span class="layer-swatch" style="background:#2E6FF2"></span> Fibra troncal</div>
         <div class="layer-row"><input type="checkbox" checked data-lline="distribucion"><span class="layer-swatch" style="background:#E14ECF"></span> Fibra distribución</div>
         <div class="layer-row"><input type="checkbox" checked data-lline="acometida"><span class="layer-swatch" style="background:#8B5CF6"></span> Acometida</div>
@@ -394,6 +402,7 @@
         <div class="add-opt" data-type="caja"><span class="dot" style="background:#F5A623"></span> Caja</div>
         <div class="add-opt" data-type="cliente"><span class="dot" style="background:#8B5CF6"></span> Cliente</div>
         <div class="add-opt" data-type="crucero"><span class="dot" style="background:#D64550"></span> Crucero (soporte T/cruz)</div>
+        <div class="add-opt" data-type="sitio"><span class="dot" style="background:#0EA5A5;border-radius:2px;"></span> Sitio / POP (OLT, Mikrotik, ODF)</div>
       </div>
 
       <div id="hint-bar">Modo agregar: <b id="hint-type">Poste</b> — haz clic en el mapa para colocarlo. Esc para cancelar.</div>
@@ -407,6 +416,7 @@
         <div class="stat-row"><span class="l">NAPs</span><span class="n" id="count-nap">0</span></div>
         <div class="stat-row"><span class="l">Cajas</span><span class="n" id="count-caja">0</span></div>
         <div class="stat-row"><span class="l">Clientes</span><span class="n" id="count-cliente">0</span></div>
+        <div class="stat-row"><span class="l">Sitios/POP</span><span class="n" id="count-sitio">0</span></div>
         <div class="stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;"><span class="l">Fibra total</span><span class="n" id="count-fibra-km" style="font-size:15px;">0 km</span></div>
       </div>
     </div>
@@ -474,12 +484,33 @@
           </select>
         </div>
         <div class="field-row">
+          <label>Nombre del cliente</label>
+          <input type="text" id="of-cliente" placeholder="Ej. María González">
+        </div>
+        <div class="field-row">
+          <label>Teléfono del cliente</label>
+          <input type="tel" id="of-telefono" placeholder="Ej. 449 123 4567">
+        </div>
+        <div class="field-row">
+          <label>Paquete contratado</label>
+          <select id="of-paquete">
+            <option value="">— seleccionar —</option>
+            <option value="50 Megas">50 Megas</option>
+            <option value="80 Megas">80 Megas</option>
+            <option value="120 Megas">120 Megas</option>
+          </select>
+        </div>
+        <div class="field-row">
           <label>Elemento relacionado (opcional)</label>
           <select id="of-elemento"><option value="">— ninguno —</option></select>
         </div>
         <div class="field-row">
           <label>Dirección / colonia</label>
           <input type="text" id="of-direccion" placeholder="Ej. Calle Lomas de Islaza #12, Villa Canto">
+        </div>
+        <div class="field-row">
+          <label>Enlace de Google Maps (opcional)</label>
+          <input type="url" id="of-mapslink" placeholder="Pega aquí el link de Google Maps de la ubicación">
         </div>
         <div class="field-row">
           <label>Técnico asignado</label>
@@ -500,6 +531,26 @@
     <div id="modal-foot">
       <button class="btn-secondary" id="orders-close2">Cerrar</button>
       <button class="btn-primary" id="orders-new-btn">+ Nueva orden</button>
+    </div>
+  </div>
+</div>
+
+<div id="installs-overlay" class="big-overlay">
+  <div class="big-box">
+    <div id="modal-head">
+      <h3>Instalaciones</h3>
+      <button id="installs-close">✕</button>
+    </div>
+    <div class="big-body">
+      <div class="install-tabs">
+        <div class="install-tab active" data-installtab="Pendiente">Nuevas <span class="n" id="installs-n-pendiente">0</span></div>
+        <div class="install-tab" data-installtab="Asignada">En proceso <span class="n" id="installs-n-asignada">0</span></div>
+        <div class="install-tab" data-installtab="Completada">Completadas <span class="n" id="installs-n-completada">0</span></div>
+      </div>
+      <div id="installs-list"></div>
+    </div>
+    <div id="modal-foot">
+      <button class="btn-secondary" id="installs-close2">Cerrar</button>
     </div>
   </div>
 </div>
@@ -561,6 +612,7 @@
     caja:    { label: 'Caja',    color: '#F5A623' },
     cliente: { label: 'Cliente', color: '#8B5CF6' },
     crucero: { label: 'Crucero', color: '#D64550' },
+    sitio:   { label: 'Sitio/POP', color: '#0EA5A5' },
   };
   const FIBER_META = {
     troncal:      { label: 'Troncal',      color: '#2E6FF2', weight: 5, dash: null },
@@ -669,6 +721,14 @@
 
   function makeIcon(type){
     const c = TYPE_META[type].color;
+    if(type === 'sitio'){
+      return L.divIcon({
+        className: '',
+        html: `<div style="width:20px;height:20px;border-radius:4px;background:${c};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:11px;">🏢</div>`,
+        iconSize: [20,20],
+        iconAnchor: [10,10]
+      });
+    }
     return L.divIcon({
       className: '',
       html: `<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`,
@@ -680,7 +740,8 @@
   function updateCounts(){
     Object.keys(TYPE_META).forEach(t=>{
       const n = elements.filter(e=>e.type===t).length;
-      document.getElementById('count-'+t).textContent = n;
+      const countEl = document.getElementById('count-'+t);
+      if(countEl) countEl.textContent = n;
     });
   }
 
@@ -720,6 +781,11 @@
     if(el.type === 'nap' && el.puertos){
       const usados = el.puertos.filter(p=>p.ocupado).length;
       extra.push(`<div class="popup-row">${usados}/${el.puertos.length} puertos ocupados</div>`);
+    }
+    if(el.type === 'sitio'){
+      ensureSitioEquipo(el);
+      const activos = Object.entries(el.equipo).filter(([k,v])=>v.activo).map(([k,v])=>SITIO_EQUIPO_META[k].label);
+      extra.push(`<div class="popup-row">${activos.length ? activos.join(' · ') : 'Sin equipo registrado'}</div>`);
     }
     if(el.colonia){
       extra.push(`<div class="popup-row">Colonia: ${el.colonia}</div>`);
@@ -829,7 +895,7 @@
     if(!addMode) return;
     const type = addMode;
     const n = elements.filter(x=>x.type===type).length + 1;
-    const prefix = { poste:'P', nap:'NAP', caja:'C', cliente:'JAAD', crucero:'CR' }[type];
+    const prefix = { poste:'P', nap:'NAP', caja:'C', cliente:'JAAD', crucero:'CR', sitio:'SITE' }[type];
     const el = {
       id: 'el_' + Date.now() + '_' + Math.floor(Math.random()*1000),
       type,
@@ -1080,6 +1146,24 @@
     return { tubo, color: FIBER_COLORS[colorIdx], tuboColor: FIBER_COLORS[tubo % 12], multiTubo: capacidad > 12 };
   }
 
+  const SITIO_EQUIPO_META = {
+    olt:       { label: 'OLT' },
+    mikrotik:  { label: 'Mikrotik' },
+    odf:       { label: 'ODF' },
+    baterias:  { label: 'Banco de baterías' },
+  };
+
+  function ensureSitioEquipo(el){
+    if(!el.equipo){
+      el.equipo = {
+        olt:      { activo:false, detalle:'' },
+        mikrotik: { activo:false, detalle:'' },
+        odf:      { activo:false, detalle:'' },
+        baterias: { activo:false, detalle:'' },
+      };
+    }
+  }
+
   function buildHilosArray(n){
     return Array.from({length:n}, ()=> ({ estado:'libre', cliente:'', empalmeCon:null }));
   }
@@ -1313,13 +1397,15 @@
     el.puertos = nuevos;
   }
 
-  // ---------- Modal de elementos (poste, nap, caja, cliente, crucero) ----------
+  // ---------- Modal de elementos (poste, nap, caja, cliente, crucero, sitio) ----------
   function openElementModal(el){
     const isCaja = el.type === 'caja';
     const isNap = el.type === 'nap';
+    const isSitio = el.type === 'sitio';
 
     if(isCaja) ensureCajaFibras(el);
     if(isNap && !el.puertos){ resizePuertos(el, 16); }
+    if(isSitio) ensureSitioEquipo(el);
 
     let extraHtml = '';
     if(isCaja){
@@ -1347,6 +1433,20 @@
         </div>
       `;
     }
+    if(isSitio){
+      extraHtml = `
+        <div class="field-row">
+          <label>Equipo instalado en este sitio</label>
+          <div id="m-equipo-rows">${Object.entries(SITIO_EQUIPO_META).map(([key, meta])=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+              <input type="checkbox" id="m-equipo-${key}-activo" ${el.equipo[key].activo?'checked':''} style="width:15px;height:15px;flex-shrink:0;">
+              <label for="m-equipo-${key}-activo" style="font-size:13px;font-weight:500;width:130px;flex-shrink:0;">${meta.label}</label>
+              <input type="text" id="m-equipo-${key}-detalle" value="${(el.equipo[key].detalle||'').replace(/"/g,'&quot;')}" placeholder="Marca / modelo / notas" style="flex:1;">
+            </div>
+          `).join('')}</div>
+        </div>
+      `;
+    }
 
     const body = `
       <div class="field-row">
@@ -1366,6 +1466,12 @@
       if(isNap){
         const nuevaN = parseInt(document.getElementById('m-puertos-n').value, 10);
         if(nuevaN !== el.puertos.length) resizePuertos(el, nuevaN);
+      }
+      if(isSitio){
+        Object.keys(SITIO_EQUIPO_META).forEach(key=>{
+          el.equipo[key].activo = document.getElementById(`m-equipo-${key}-activo`).checked;
+          el.equipo[key].detalle = document.getElementById(`m-equipo-${key}-detalle`).value.trim();
+        });
       }
       refreshPopup(el);
       persist();
@@ -1752,6 +1858,13 @@
     return 'OT-' + String(orders.length + 1).padStart(3, '0');
   }
 
+  function ordenUbicacionHref(o){
+    if(o.mapsLink) return o.mapsLink;
+    const el = o.elementoId ? elements.find(e=>e.id===o.elementoId) : null;
+    if(el) return `https://www.google.com/maps/dir/?api=1&destination=${el.lat},${el.lng}`;
+    return null;
+  }
+
   function renderOrdersElementSelect(){
     const sel = document.getElementById('of-elemento');
     sel.innerHTML = '<option value="">— ninguno —</option>' +
@@ -1766,6 +1879,7 @@
     }
     cont.innerHTML = orders.slice().reverse().map(o=>{
       const elNombre = o.elementoId ? (elements.find(e=>e.id===o.elementoId)?.nombre || '') : '';
+      const href = ordenUbicacionHref(o);
       return `
         <div class="list-card">
           <div class="list-card-head">
@@ -1776,9 +1890,11 @@
               <option value="Completada" ${o.estado==='Completada'?'selected':''}>Completada</option>
             </select>
           </div>
+          ${o.cliente ? `<div class="list-card-meta"><b>${o.cliente}</b>${o.telefono ? ' · ' + o.telefono : ''}${o.paquete ? ' · ' + o.paquete : ''}</div>` : ''}
           <div class="list-card-meta">${o.direccion || 'Sin dirección'}${elNombre ? ' · ' + elNombre : ''}</div>
           <div class="list-card-meta">Técnico: ${o.tecnico || '—'} · Fecha: ${o.fecha || '—'}</div>
           <div class="list-card-actions">
+            ${href ? `<a class="gomap" href="${href}" target="_blank" rel="noopener">📍 Cómo llegar</a>` : ''}
             <span data-pdf="${o.id}">🖨️ Ver / Imprimir PDF</span>
             <span class="danger" data-delorder="${o.id}">Eliminar</span>
           </div>
@@ -1836,11 +1952,14 @@
         </div>
         <table>
           <tr><td class="label">Tipo de orden</td><td>${o.tipo}</td></tr>
+          <tr><td class="label">Cliente</td><td>${o.cliente || '—'}${o.telefono ? ' · ' + o.telefono : ''}</td></tr>
+          <tr><td class="label">Paquete contratado</td><td>${o.paquete || '—'}</td></tr>
           <tr><td class="label">Elemento relacionado</td><td>${elNombre || '—'}</td></tr>
           <tr><td class="label">Dirección / colonia</td><td>${o.direccion || '—'}</td></tr>
           <tr><td class="label">Técnico asignado</td><td>${o.tecnico || '—'}</td></tr>
           <tr><td class="label">Fecha</td><td>${o.fecha || '—'}</td></tr>
           <tr><td class="label">Estado</td><td>${o.estado}</td></tr>
+          <tr><td class="label">N° serie / MAC módem</td><td>${o.modem || '—'}</td></tr>
         </table>
         <div class="desc-box"><b>Descripción / instrucciones:</b><br>${(o.descripcion||'—').replace(/\\n/g,'<br>')}</div>
         <div class="firma"><div>Firma del técnico</div><div>Firma / sello del cliente</div></div>
@@ -1864,21 +1983,108 @@
     document.getElementById('of-fecha').value = new Date().toISOString().slice(0,10);
     document.getElementById('orders-new-form').classList.toggle('hidden');
   });
+
+  // ---------- Instalaciones (vista rápida para técnicos en campo) ----------
+  const installsOverlay = document.getElementById('installs-overlay');
+  let installsTab = 'Pendiente';
+  const INSTALL_ESTADO_SIGUIENTE = { 'Pendiente': 'Asignada', 'Asignada': 'Completada' };
+  const INSTALL_ACCION_LABEL = { 'Pendiente': '▶ Iniciar', 'Asignada': '✓ Completar' };
+
+  function renderInstallsCounts(){
+    ['Pendiente','Asignada','Completada'].forEach(estado=>{
+      const n = orders.filter(o=>o.estado===estado).length;
+      const key = estado.toLowerCase();
+      const elN = document.getElementById('installs-n-'+key);
+      if(elN) elN.textContent = n;
+    });
+  }
+
+  function renderInstallsList(){
+    renderInstallsCounts();
+    const cont = document.getElementById('installs-list');
+    const filtradas = orders.filter(o=>o.estado===installsTab).slice().reverse();
+    if(filtradas.length === 0){
+      cont.innerHTML = '<div class="search-empty">No hay órdenes en esta categoría.</div>';
+      return;
+    }
+    cont.innerHTML = filtradas.map(o=>{
+      const el = o.elementoId ? elements.find(e=>e.id===o.elementoId) : null;
+      const elNombre = el ? `${TYPE_META[el.type].label} · ${el.nombre}` : '';
+      const badgeClass = o.estado.toLowerCase();
+      const accion = INSTALL_ESTADO_SIGUIENTE[o.estado];
+      const href = ordenUbicacionHref(o);
+      return `
+        <div class="list-card">
+          <div class="list-card-head">
+            <span class="list-card-title">${o.folio} · ${o.tipo}</span>
+            <span class="badge ${badgeClass}">${o.estado}</span>
+          </div>
+          ${o.cliente ? `<div class="list-card-meta"><b>${o.cliente}</b>${o.telefono ? ' · ' + o.telefono : ''}${o.paquete ? ' · ' + o.paquete : ''}</div>` : ''}
+          <div class="list-card-meta">${o.direccion || 'Sin dirección'}${elNombre ? ' · ' + elNombre : ''}</div>
+          <div class="list-card-meta">Técnico: ${o.tecnico || '—'} · Fecha: ${o.fecha || '—'}</div>
+          ${o.estado === 'Asignada' ? `<div class="field-row" style="margin:8px 0 0;"><label style="margin-bottom:3px;">N° de serie / MAC del módem</label><input type="text" data-modem="${o.id}" value="${(o.modem||'').replace(/"/g,'&quot;')}" placeholder="Ej. ZTEG8245Q o AA:BB:CC:DD:EE:FF"></div>` : ''}
+          ${o.estado === 'Completada' && o.modem ? `<div class="list-card-meta">Módem: ${o.modem}</div>` : ''}
+          <div class="list-card-actions">
+            ${href ? `<a class="gomap" href="${href}" target="_blank" rel="noopener">📍 Cómo llegar</a>` : ''}
+            ${accion ? `<button class="advance" data-advance="${o.id}">${INSTALL_ACCION_LABEL[o.estado]}</button>` : ''}
+            <span data-pdf="${o.id}">🖨️ PDF</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+    cont.querySelectorAll('[data-advance]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const o = orders.find(x=>x.id===btn.dataset.advance);
+        if(o.estado === 'Asignada'){
+          const modemInput = cont.querySelector(`[data-modem="${o.id}"]`);
+          if(modemInput) o.modem = modemInput.value.trim();
+        }
+        o.estado = INSTALL_ESTADO_SIGUIENTE[o.estado];
+        persistOrders();
+        renderInstallsList();
+      });
+    });
+    cont.querySelectorAll('[data-pdf]').forEach(btn=>{
+      btn.addEventListener('click', ()=> printOrder(orders.find(x=>x.id===btn.dataset.pdf)));
+    });
+  }
+
+  document.getElementById('nav-instalaciones').addEventListener('click', ()=>{
+    loadOrders();
+    installsTab = 'Pendiente';
+    document.querySelectorAll('.install-tab').forEach(t=>t.classList.toggle('active', t.dataset.installtab===installsTab));
+    renderInstallsList();
+    installsOverlay.classList.add('open');
+  });
+  document.getElementById('installs-close').addEventListener('click', ()=> installsOverlay.classList.remove('open'));
+  document.getElementById('installs-close2').addEventListener('click', ()=> installsOverlay.classList.remove('open'));
+  document.querySelectorAll('.install-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      installsTab = tab.dataset.installtab;
+      document.querySelectorAll('.install-tab').forEach(t=>t.classList.toggle('active', t===tab));
+      renderInstallsList();
+    });
+  });
   document.getElementById('of-guardar').addEventListener('click', ()=>{
     const orden = {
       id: 'ord_' + Date.now(),
       folio: nextFolio(),
       tipo: document.getElementById('of-tipo').value,
+      cliente: document.getElementById('of-cliente').value.trim(),
+      telefono: document.getElementById('of-telefono').value.trim(),
+      paquete: document.getElementById('of-paquete').value,
       elementoId: document.getElementById('of-elemento').value || null,
       direccion: document.getElementById('of-direccion').value.trim(),
+      mapsLink: document.getElementById('of-mapslink').value.trim(),
       tecnico: document.getElementById('of-tecnico').value.trim(),
       fecha: document.getElementById('of-fecha').value,
       descripcion: document.getElementById('of-desc').value.trim(),
+      modem: '',
       estado: 'Pendiente'
     };
     orders.push(orden);
     persistOrders();
-    ['of-direccion','of-tecnico','of-desc'].forEach(id=> document.getElementById(id).value = '');
+    ['of-cliente','of-telefono','of-paquete','of-direccion','of-mapslink','of-tecnico','of-desc'].forEach(id=> document.getElementById(id).value = '');
     document.getElementById('orders-new-form').classList.add('hidden');
     renderOrdersList();
   });

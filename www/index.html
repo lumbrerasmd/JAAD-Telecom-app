@@ -255,6 +255,9 @@
   .install-tab .n{margin-left:4px;opacity:.85;}
   .list-card-actions a.gomap{background:var(--blue-dim);color:var(--blue);padding:6px 10px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;}
   .list-card-actions button.advance{background:var(--green);color:#fff;border:none;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .detail-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .detail-row .l{color:var(--text-dim);flex-shrink:0;}
+  .detail-row .v{font-weight:600;text-align:right;}
   .active-tag{font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-bg);padding:3px 8px;border-radius:20px;}
 
   #home-screen{
@@ -498,6 +501,21 @@
   </div>
 </div>
 
+<div id="cliente-detalle-overlay" class="big-overlay">
+  <div class="big-box">
+    <div id="modal-head">
+      <h3 id="cd-titulo">Cliente</h3>
+      <button id="cd-close">✕</button>
+    </div>
+    <div class="big-body">
+      <div id="cd-body"></div>
+    </div>
+    <div id="modal-foot">
+      <button class="btn-secondary" id="cd-close2">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-overlay">
   <div id="modal-box">
     <div id="modal-head">
@@ -565,6 +583,10 @@
           <input type="tel" id="of-telefono" placeholder="Ej. 449 123 4567">
         </div>
         <div class="field-row">
+          <label>Correo electrónico</label>
+          <input type="text" id="of-correo" placeholder="Ej. cliente@correo.com">
+        </div>
+        <div class="field-row">
           <label>Paquete contratado</label>
           <select id="of-paquete">
             <option value="">— seleccionar —</option>
@@ -574,8 +596,12 @@
           </select>
         </div>
         <div class="field-row">
-          <label>Elemento relacionado (opcional)</label>
-          <select id="of-elemento"><option value="">— ninguno —</option></select>
+          <label>NAP donde se conecta</label>
+          <select id="of-nap"><option value="">— seleccionar NAP —</option></select>
+        </div>
+        <div class="field-row">
+          <label>Puerto de esa NAP</label>
+          <select id="of-puerto"><option value="">— primero elige una NAP —</option></select>
         </div>
         <div class="field-row">
           <label>Dirección / colonia</label>
@@ -1931,17 +1957,36 @@
     return 'OT-' + String(orders.length + 1).padStart(3, '0');
   }
 
+  function nextClienteCodigo(fecha){
+    const yaAsignados = orders.filter(o => o.clienteCodigo).length;
+    const yy = (fecha || new Date().toISOString().slice(0,10)).slice(2,4);
+    return 'JAAD-' + String(yaAsignados + 1).padStart(4, '0') + '-' + yy;
+  }
+
   function ordenUbicacionHref(o){
     if(o.mapsLink) return o.mapsLink;
+    const nap = o.napId ? elements.find(e=>e.id===o.napId) : null;
+    if(nap) return `https://www.google.com/maps/dir/?api=1&destination=${nap.lat},${nap.lng}`;
     const el = o.elementoId ? elements.find(e=>e.id===o.elementoId) : null;
     if(el) return `https://www.google.com/maps/dir/?api=1&destination=${el.lat},${el.lng}`;
     return null;
   }
 
-  function renderOrdersElementSelect(){
-    const sel = document.getElementById('of-elemento');
-    sel.innerHTML = '<option value="">— ninguno —</option>' +
-      elements.map(el => `<option value="${el.id}">${TYPE_META[el.type].label} · ${el.nombre}</option>`).join('');
+  function renderOrdersNapSelect(){
+    const sel = document.getElementById('of-nap');
+    const naps = elements.filter(e=>e.type==='nap');
+    sel.innerHTML = '<option value="">— seleccionar NAP —</option>' +
+      naps.map(el => `<option value="${el.id}">${el.nombre}${el.colonia ? ' · ' + el.colonia : ''}</option>`).join('');
+    document.getElementById('of-puerto').innerHTML = '<option value="">— primero elige una NAP —</option>';
+  }
+
+  function renderOrdersPuertoSelect(napId){
+    const sel = document.getElementById('of-puerto');
+    const nap = elements.find(e=>e.id===napId);
+    if(!nap){ sel.innerHTML = '<option value="">— primero elige una NAP —</option>'; return; }
+    const puertos = nap.puertos && nap.puertos.length ? nap.puertos : Array.from({length:16}, ()=>({ocupado:false, cliente:''}));
+    sel.innerHTML = '<option value="">— seleccionar puerto —</option>' +
+      puertos.map((p,i)=> `<option value="${i+1}" ${p.ocupado?'disabled':''}>Puerto ${i+1}${p.ocupado ? ' (ocupado: ' + (p.cliente||'—') + ')' : ' (libre)'}</option>`).join('');
   }
 
   function renderOrdersList(){
@@ -1951,7 +1996,8 @@
       return;
     }
     cont.innerHTML = orders.slice().reverse().map(o=>{
-      const elNombre = o.elementoId ? (elements.find(e=>e.id===o.elementoId)?.nombre || '') : '';
+      const nap = o.napId ? elements.find(e=>e.id===o.napId) : null;
+      const napTexto = nap ? `NAP ${nap.nombre}${o.puerto ? ' · Puerto ' + o.puerto : ''}` : '';
       const href = ordenUbicacionHref(o);
       return `
         <div class="list-card">
@@ -1964,8 +2010,8 @@
             </select>
           </div>
           ${o.cliente ? `<div class="list-card-meta"><b>${o.cliente}</b>${o.telefono ? ' · ' + o.telefono : ''}${o.paquete ? ' · ' + o.paquete : ''}</div>` : ''}
-          <div class="list-card-meta">${o.direccion || 'Sin dirección'}${elNombre ? ' · ' + elNombre : ''}</div>
-          <div class="list-card-meta">Técnico: ${o.tecnico || '—'} · Fecha: ${o.fecha || '—'}</div>
+          <div class="list-card-meta">${o.direccion || 'Sin dirección'}${napTexto ? ' · ' + napTexto : ''}</div>
+          <div class="list-card-meta">Técnico: ${o.tecnico || '—'} · Fecha: ${o.fecha || '—'}${o.clienteCodigo ? ' · Código: ' + o.clienteCodigo : ''}</div>
           <div class="list-card-actions">
             ${href ? `<a class="gomap" href="${href}" target="_blank" rel="noopener">📍 Cómo llegar</a>` : ''}
             <span data-pdf="${o.id}">🖨️ Ver / Imprimir PDF</span>
@@ -1995,7 +2041,8 @@
   }
 
   function printOrder(o){
-    const elNombre = o.elementoId ? (elements.find(e=>e.id===o.elementoId)?.nombre || '') : '';
+    const nap = o.napId ? elements.find(e=>e.id===o.napId) : null;
+    const napTexto = nap ? `${nap.nombre}${o.puerto ? ' · Puerto ' + o.puerto : ''}` : '—';
     const logoSrc = document.querySelector('.brand-mark img')?.src || '';
     const proyecto = getActiveProject();
     const win = window.open('', '_blank');
@@ -2025,9 +2072,10 @@
         </div>
         <table>
           <tr><td class="label">Tipo de orden</td><td>${o.tipo}</td></tr>
-          <tr><td class="label">Cliente</td><td>${o.cliente || '—'}${o.telefono ? ' · ' + o.telefono : ''}</td></tr>
+          <tr><td class="label">Cliente</td><td>${o.cliente || '—'}${o.telefono ? ' · ' + o.telefono : ''}${o.correo ? ' · ' + o.correo : ''}</td></tr>
+          <tr><td class="label">Código de cliente</td><td>${o.clienteCodigo || '(se asigna al completar)'}</td></tr>
           <tr><td class="label">Paquete contratado</td><td>${o.paquete || '—'}</td></tr>
-          <tr><td class="label">Elemento relacionado</td><td>${elNombre || '—'}</td></tr>
+          <tr><td class="label">NAP y puerto</td><td>${napTexto}</td></tr>
           <tr><td class="label">Dirección / colonia</td><td>${o.direccion || '—'}</td></tr>
           <tr><td class="label">Técnico asignado</td><td>${o.tecnico || '—'}</td></tr>
           <tr><td class="label">Fecha</td><td>${o.fecha || '—'}</td></tr>
@@ -2045,7 +2093,7 @@
   const ordersOverlay = document.getElementById('orders-overlay');
   document.getElementById('nav-ordenes').addEventListener('click', ()=>{
     loadOrders();
-    renderOrdersElementSelect();
+    renderOrdersNapSelect();
     renderOrdersList();
     document.getElementById('orders-new-form').classList.add('hidden');
     ordersOverlay.classList.add('open');
@@ -2081,8 +2129,8 @@
       return;
     }
     cont.innerHTML = filtradas.map(o=>{
-      const el = o.elementoId ? elements.find(e=>e.id===o.elementoId) : null;
-      const elNombre = el ? `${TYPE_META[el.type].label} · ${el.nombre}` : '';
+      const nap = o.napId ? elements.find(e=>e.id===o.napId) : null;
+      const napTexto = nap ? `NAP ${nap.nombre}${o.puerto ? ' · Puerto ' + o.puerto : ''}` : '';
       const badgeClass = o.estado.toLowerCase();
       const accion = INSTALL_ESTADO_SIGUIENTE[o.estado];
       const href = ordenUbicacionHref(o);
@@ -2093,10 +2141,10 @@
             <span class="badge ${badgeClass}">${o.estado}</span>
           </div>
           ${o.cliente ? `<div class="list-card-meta"><b>${o.cliente}</b>${o.telefono ? ' · ' + o.telefono : ''}${o.paquete ? ' · ' + o.paquete : ''}</div>` : ''}
-          <div class="list-card-meta">${o.direccion || 'Sin dirección'}${elNombre ? ' · ' + elNombre : ''}</div>
+          <div class="list-card-meta">${o.direccion || 'Sin dirección'}${napTexto ? ' · ' + napTexto : ''}</div>
           <div class="list-card-meta">Técnico: ${o.tecnico || '—'} · Fecha: ${o.fecha || '—'}</div>
           ${o.estado === 'Asignada' ? `<div class="field-row" style="margin:8px 0 0;"><label style="margin-bottom:3px;">N° de serie / MAC del módem</label><input type="text" data-modem="${o.id}" value="${(o.modem||'').replace(/"/g,'&quot;')}" placeholder="Ej. ZTEG8245Q o AA:BB:CC:DD:EE:FF"></div>` : ''}
-          ${o.estado === 'Completada' && o.modem ? `<div class="list-card-meta">Módem: ${o.modem}</div>` : ''}
+          ${o.estado === 'Completada' && o.modem ? `<div class="list-card-meta">Módem: ${o.modem}${o.clienteCodigo ? ' · Código: ' + o.clienteCodigo : ''}</div>` : ''}
           <div class="list-card-actions">
             ${href ? `<a class="gomap" href="${href}" target="_blank" rel="noopener">📍 Cómo llegar</a>` : ''}
             ${accion ? `<button class="advance" data-advance="${o.id}">${INSTALL_ACCION_LABEL[o.estado]}</button>` : ''}
@@ -2111,6 +2159,23 @@
         if(o.estado === 'Asignada'){
           const modemInput = cont.querySelector(`[data-modem="${o.id}"]`);
           if(modemInput) o.modem = modemInput.value.trim();
+          // Al completar la instalación, se registra el cliente y se ocupa el puerto de la NAP
+          if(!o.clienteCodigo){
+            o.clienteCodigo = nextClienteCodigo(o.fecha);
+            if(o.napId && o.puerto){
+              const nap = elements.find(e=>e.id===o.napId);
+              if(nap){
+                if(!nap.puertos || !nap.puertos.length) resizePuertos(nap, 16);
+                const idx = o.puerto - 1;
+                if(nap.puertos[idx]){
+                  nap.puertos[idx].ocupado = true;
+                  nap.puertos[idx].cliente = o.cliente || o.clienteCodigo;
+                }
+                refreshPopup(nap);
+                persist();
+              }
+            }
+          }
         }
         o.estado = INSTALL_ESTADO_SIGUIENTE[o.estado];
         persistOrders();
@@ -2140,39 +2205,65 @@
     });
   });
 
-  // ---------- Clientes (vista rápida) ----------
+  // ---------- Clientes (vista rápida, alimentada por órdenes completadas) ----------
   const clientesOverlay = document.getElementById('clientes-overlay');
+  const clienteDetalleOverlay = document.getElementById('cliente-detalle-overlay');
+
+  function clientesRegistrados(){
+    return orders.filter(o => o.clienteCodigo);
+  }
+
   function renderClientesList(filtro){
+    loadOrders();
     const q = (filtro || '').trim().toLowerCase();
     const cont = document.getElementById('clientes-list');
-    const lista = elements.filter(el => el.type === 'cliente' &&
-      ((el.nombre||'').toLowerCase().includes(q) || (el.colonia||'').toLowerCase().includes(q))
-    );
+    const lista = clientesRegistrados().filter(o =>
+      (o.clienteCodigo||'').toLowerCase().includes(q) ||
+      (o.cliente||'').toLowerCase().includes(q) ||
+      (o.direccion||'').toLowerCase().includes(q)
+    ).slice().reverse();
     if(lista.length === 0){
-      cont.innerHTML = '<div class="search-empty">No hay clientes que coincidan.</div>';
+      cont.innerHTML = '<div class="search-empty">Todavía no hay clientes instalados. Aparecen aquí automáticamente al completar una orden de instalación.</div>';
       return;
     }
-    cont.innerHTML = lista.map(el => `
+    cont.innerHTML = lista.map(o => `
       <div class="list-card">
-        <div class="list-card-head"><span class="list-card-title">${el.nombre}</span></div>
-        <div class="list-card-meta">${el.colonia || 'Sin colonia registrada'}</div>
+        <div class="list-card-head"><span class="list-card-title">${o.clienteCodigo}</span></div>
+        <div class="list-card-meta"><b>${o.cliente || 'Sin nombre'}</b>${o.paquete ? ' · ' + o.paquete : ''}</div>
+        <div class="list-card-meta">${o.direccion || 'Sin dirección'}</div>
         <div class="list-card-actions">
-          <button class="advance" data-vermapa="${el.id}">📍 Ver en mapa</button>
+          <button class="advance" data-vercliente="${o.id}">Ver ficha completa</button>
         </div>
       </div>
     `).join('');
-    cont.querySelectorAll('[data-vermapa]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const el = elements.find(e=>e.id===btn.dataset.vermapa);
-        if(!el) return;
-        clientesOverlay.classList.remove('open');
-        showApp();
-        map.setView([el.lat, el.lng], 18);
-        const m = markers[el.id];
-        if(m) m.openPopup();
-      });
+    cont.querySelectorAll('[data-vercliente]').forEach(btn=>{
+      btn.addEventListener('click', ()=> abrirFichaCliente(btn.dataset.vercliente));
     });
   }
+
+  function abrirFichaCliente(ordenId){
+    const o = orders.find(x=>x.id===ordenId);
+    if(!o) return;
+    const nap = o.napId ? elements.find(e=>e.id===o.napId) : null;
+    const napTexto = nap ? `${nap.nombre}${o.puerto ? ' · Puerto ' + o.puerto : ''}` : '—';
+    const href = ordenUbicacionHref(o);
+    document.getElementById('cd-titulo').textContent = o.clienteCodigo;
+    document.getElementById('cd-body').innerHTML = `
+      <div class="detail-row"><span class="l">Nombre completo</span><span class="v">${o.cliente || '—'}</span></div>
+      <div class="detail-row"><span class="l">Número de contacto</span><span class="v">${o.telefono || '—'}</span></div>
+      <div class="detail-row"><span class="l">Correo</span><span class="v">${o.correo || '—'}</span></div>
+      <div class="detail-row"><span class="l">Dirección</span><span class="v">${o.direccion || '—'}</span></div>
+      <div class="detail-row"><span class="l">Paquete contratado</span><span class="v">${o.paquete || '—'}</span></div>
+      <div class="detail-row"><span class="l">NAP y puerto</span><span class="v">${napTexto}</span></div>
+      <div class="detail-row"><span class="l">Fecha de instalación</span><span class="v">${o.fecha || '—'}</span></div>
+      <div class="detail-row"><span class="l">N° serie / MAC módem</span><span class="v">${o.modem || '—'}</span></div>
+      ${href ? `<div style="margin-top:14px;"><a class="gomap" href="${href}" target="_blank" rel="noopener">📍 Cómo llegar</a></div>` : ''}
+    `;
+    clienteDetalleOverlay.classList.add('open');
+  }
+  document.getElementById('cd-close').addEventListener('click', ()=> clienteDetalleOverlay.classList.remove('open'));
+  document.getElementById('cd-close2').addEventListener('click', ()=> clienteDetalleOverlay.classList.remove('open'));
+
   document.getElementById('clientes-close').addEventListener('click', ()=> clientesOverlay.classList.remove('open'));
   document.getElementById('clientes-close2').addEventListener('click', ()=> clientesOverlay.classList.remove('open'));
   document.getElementById('clientes-buscar').addEventListener('input', (e)=> renderClientesList(e.target.value));
@@ -2228,22 +2319,28 @@
       tipo: document.getElementById('of-tipo').value,
       cliente: document.getElementById('of-cliente').value.trim(),
       telefono: document.getElementById('of-telefono').value.trim(),
+      correo: document.getElementById('of-correo').value.trim(),
       paquete: document.getElementById('of-paquete').value,
-      elementoId: document.getElementById('of-elemento').value || null,
+      napId: document.getElementById('of-nap').value || null,
+      puerto: document.getElementById('of-puerto').value ? parseInt(document.getElementById('of-puerto').value, 10) : null,
       direccion: document.getElementById('of-direccion').value.trim(),
       mapsLink: document.getElementById('of-mapslink').value.trim(),
       tecnico: document.getElementById('of-tecnico').value.trim(),
       fecha: document.getElementById('of-fecha').value,
       descripcion: document.getElementById('of-desc').value.trim(),
       modem: '',
+      clienteCodigo: '',
       estado: 'Pendiente'
     };
     orders.push(orden);
     persistOrders();
-    ['of-cliente','of-telefono','of-paquete','of-direccion','of-mapslink','of-tecnico','of-desc'].forEach(id=> document.getElementById(id).value = '');
+    ['of-cliente','of-telefono','of-correo','of-paquete','of-direccion','of-mapslink','of-tecnico','of-desc'].forEach(id=> document.getElementById(id).value = '');
+    document.getElementById('of-nap').value = '';
+    document.getElementById('of-puerto').innerHTML = '<option value="">— primero elige una NAP —</option>';
     document.getElementById('orders-new-form').classList.add('hidden');
     renderOrdersList();
   });
+  document.getElementById('of-nap').addEventListener('change', (e)=> renderOrdersPuertoSelect(e.target.value));
 
   // ---------- Pantalla de inicio ----------
   const homeScreen = document.getElementById('home-screen');

@@ -398,26 +398,22 @@
           <div class="kpi-card">
             <div class="icon" style="background:rgba(46,204,113,.15); color:rgb(46,204,113);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
             <div class="label">Clientes activos</div>
-            <div class="value">112</div>
-            <div class="delta up">↑ 12% vs. mes anterior</div>
+            <div class="value" id="inicio-clientes-activos">—</div>
           </div>
           <div class="kpi-card">
-            <div class="icon" style="background:rgba(41,198,246,.15); color:rgb(41,198,246);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 20v-4"/><path d="M10 20v-9"/><path d="M16 20v-14"/></svg></div>
-            <div class="label">En línea</div>
-            <div class="value">98</div>
-            <div class="delta" style="color:var(--text-dim);">87.5% del total</div>
+            <div class="icon" style="background:rgba(245,166,35,.15); color:rgb(245,166,35);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M12 8v5M12 16h.01"/><path d="M10.3 3.6L2.8 17a1.8 1.8 0 0 0 1.6 2.7h15.2a1.8 1.8 0 0 0 1.6-2.7L13.7 3.6a1.8 1.8 0 0 0-3.4 0z"/></svg></div>
+            <div class="label">Pendientes de instalar</div>
+            <div class="value" id="inicio-clientes-pendientes">—</div>
           </div>
           <div class="kpi-card">
             <div class="icon" style="background:rgba(240,69,92,.15); color:rgb(240,69,92);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M12 3.5l9.5 16.5H2.5z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/></svg></div>
-            <div class="label">Fuera de línea</div>
-            <div class="value">14</div>
-            <div class="delta" style="color:var(--text-dim);">12.5% del total</div>
+            <div class="label">Tickets abiertos</div>
+            <div class="value" id="inicio-tickets-abiertos">—</div>
           </div>
           <div class="kpi-card">
-            <div class="icon" style="background:rgba(245,166,35,.15); color:rgb(245,166,35);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 8a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 000-4V8z"/><path d="M10 6.5v11" stroke-dasharray="2 2"/></svg></div>
-            <div class="label">Tickets abiertos</div>
-            <div class="value">7</div>
-            <div class="delta down">↑ 42% vs. mes anterior</div>
+            <div class="icon" style="background:rgba(139,92,246,.15); color:rgb(139,92,246);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="10" r="3"/><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/></svg></div>
+            <div class="label">Elementos en el mapa</div>
+            <div class="value" id="inicio-elementos-mapa">—</div>
           </div>
         </div>
 
@@ -425,28 +421,23 @@
           <div class="kpi-card">
             <div class="icon" style="background:rgba(46,204,113,.15); color:rgb(46,204,113);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
             <div class="label">Clientes activos</div>
-            <div class="value">112</div>
+            <div class="value" id="inicio-tec-clientes-activos">—</div>
           </div>
           <div class="kpi-card">
             <div class="icon" style="background:rgba(41,198,246,.15); color:rgb(41,198,246);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3.5 17.5l3 3 5.8-5.8a4 4 0 005.4-5.4l-2.4 2.4-2-2 2.4-2.4z"/></svg></div>
-            <div class="label">Instalaciones (este mes)</div>
-            <div class="value">5</div>
+            <div class="label">Instalaciones completadas</div>
+            <div class="value" id="inicio-tec-instalaciones">—</div>
           </div>
           <div class="kpi-card" style="grid-column: span 2;">
-            <div class="icon" style="background:rgba(59,123,240,.15); color:rgb(59,123,240);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 20v-4"/><path d="M10 20v-9"/><path d="M16 20v-14"/></svg></div>
-            <div class="label">Consumo actual de red</div>
-            <div class="value">820 Mbps</div>
+            <div class="icon" style="background:rgba(240,69,92,.15); color:rgb(240,69,92);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M12 3.5l9.5 16.5H2.5z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/></svg></div>
+            <div class="label">Tickets abiertos</div>
+            <div class="value" id="inicio-tec-tickets">—</div>
           </div>
         </div>
 
         <div class="section-card">
-          <div class="section-title">Consumo de red <span style="color:var(--text-dim); font-weight:400;">1 Gbps</span></div>
-          <div class="chart-wrap">
-            <svg viewBox="0 0 300 90" preserveAspectRatio="none">
-              <polyline points="0,60 40,55 80,40 120,45 160,25 200,32 240,15 300,22" fill="none" stroke="#29C6F6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="0,75 40,70 80,68 120,66 160,58 200,60 240,50 300,52" fill="none" stroke="#3B7BF0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-            </svg>
-          </div>
+          <div class="section-title">Consumo de red</div>
+          <div id="consumo-red-cuerpo"></div>
         </div>
 
         <div class="section-card" id="card-tickets-recientes">
@@ -457,8 +448,52 @@
 
       <section class="view" id="view-clientes">
         <div class="search-box"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> <input placeholder="Buscar cliente, dirección o #..." id="buscar-cliente" oninput="renderClientes()"></div>
+        <div style="text-align:right; margin-bottom:10px;"><a class="link" style="font-size:12.5px;" onclick="abrirNuevoCliente()">+ Registrar cliente directo (sin instalación)</a></div>
         <div class="tab-row" id="tabs-clientes"></div>
         <div id="lista-clientes"></div>
+      </section>
+
+      <section class="view" id="view-nuevo-cliente">
+        <div class="section-card">
+          <div class="section-title">Registrar cliente</div>
+          <div style="font-size:11.5px; color:var(--text-dim); margin-bottom:10px;">Para clientes que ya tienes (activos, suspendidos, etc.) sin pasar por el asistente de nueva instalación.</div>
+          <div class="form-grid">
+            <label class="field-label">Nombre</label>
+            <input class="field" id="nc-nombre" placeholder="Nombre del cliente">
+            <label class="field-label">Dirección</label>
+            <input class="field" id="nc-direccion" placeholder="Calle, número, colonia">
+            <label class="field-label">Teléfono (opcional)</label>
+            <input class="field" id="nc-telefono" placeholder="449 000 0000">
+            <label class="field-label">Plan</label>
+            <select class="field" id="nc-plan"></select>
+            <label class="field-label">Estado</label>
+            <select class="field" id="nc-estado">
+              <option value="Activo">Activo</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Suspendido">Suspendido</option>
+            </select>
+            <label class="field-label">Estado de pago</label>
+            <select class="field" id="nc-pago">
+              <option value="Al corriente">Al corriente</option>
+              <option value="Pendiente de instalación">Pendiente de instalación</option>
+              <option value="Vencido">Vencido</option>
+            </select>
+            <label class="field-label">IP (opcional)</label>
+            <input class="field" id="nc-ip" placeholder="186.142.0.0">
+          </div>
+          <div style="display:flex; gap:12px; margin-top:12px;">
+            <div style="flex:1;">
+              <label class="field-label">RX (dBm, opcional)</label>
+              <input class="field" type="number" step="0.1" id="nc-rx" placeholder="-18.5">
+            </div>
+            <div style="flex:1;">
+              <label class="field-label">TX (dBm, opcional)</label>
+              <input class="field" type="number" step="0.1" id="nc-tx" placeholder="2.8">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="guardarNuevoCliente()">Registrar cliente</button>
+          <div class="login-error" id="nc-error"></div>
+        </div>
       </section>
 
       <section class="view" id="view-cliente-detalle">
@@ -916,21 +951,21 @@ const IMG_TORRES = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCA
 
 const ADMIN = { nombre: 'Daniel Lumbreras', correo: 'mariolumbrerash@gmail.com', telefono: '4492151612', rol: 'administrador', pass: 'jaad2026' };
 
-const clientesBase = [
-  { id: 1, nombre: 'Ana Martínez', direccion: 'Calle Los Arcos 528', plan: '50 Mbps', estado: 'Activo', ip: '186.142.23.87', rx: -18.5, tx: 2.8, pago: 'Al corriente' },
-  { id: 2, nombre: 'Carlos Ramírez', direccion: 'Fracc. Lomas de Aguascalientes', plan: '80 Mbps', estado: 'Activo', ip: '186.142.10.44', rx: -19.2, tx: 2.6, pago: 'Al corriente' },
-  { id: 3, nombre: 'Alejandro Torres', direccion: 'Col. Municipio Libre', plan: '120 Mbps', estado: 'Activo', ip: '186.142.55.12', rx: -17.9, tx: 3.0, pago: 'Al corriente' },
-  { id: 4, nombre: 'Lucía Hernández', direccion: 'Calle San Francisco 102', plan: '50 Mbps', estado: 'Pendiente', ip: '—', rx: null, tx: null, pago: 'Pendiente de instalación' },
-  { id: 5, nombre: 'Javier Morales', direccion: 'Fracc. Valle Dorado', plan: '80 Mbps', estado: 'Activo', ip: '186.142.88.31', rx: -20.1, tx: 2.9, pago: 'Al corriente' },
-  { id: 6, nombre: 'Patricia Soto', direccion: 'Calle Villa Canto 34', plan: '120 Mbps', estado: 'Suspendido', ip: '186.142.90.05', rx: -22.4, tx: 2.4, pago: 'Vencido' },
-];
+function cargarClientes() {
+  try { const g = localStorage.getItem('jaad_clientes_demo'); return g ? JSON.parse(g) : []; }
+  catch (e) { return []; }
+}
+function guardarClientes(lista) { try { localStorage.setItem('jaad_clientes_demo', JSON.stringify(lista)); } catch (e) {} }
+let clientesBase = cargarClientes();
+let clienteContadorId = clientesBase.reduce(function (m, c) { return Math.max(m, c.id || 0); }, 0) + 1;
 
-const ticketsBase = [
-  { id: 458, titulo: 'Nueva conexión — Villa Canto', estado: 'En proceso', fecha: '16 sep 2026 · 10:00' },
-  { id: 457, titulo: 'Sin servicio — Corte de fibra, Lomas de Aguascalientes', estado: 'Abierto', fecha: '15 sep 2026 · 14:30' },
-  { id: 456, titulo: 'Solicitud de cambio de plan — Centro', estado: 'En proceso', fecha: '14 sep 2026 · 11:20' },
-  { id: 455, titulo: 'Reporte de falla — Baja señal, Valle Dorado', estado: 'Cerrado', fecha: '13 sep 2026 · 16:45' },
-];
+function cargarTickets() {
+  try { const g = localStorage.getItem('jaad_tickets_demo'); return g ? JSON.parse(g) : []; }
+  catch (e) { return []; }
+}
+function guardarTickets(lista) { try { localStorage.setItem('jaad_tickets_demo', JSON.stringify(lista)); } catch (e) {} }
+let ticketsBase = cargarTickets();
+
 
 const naps = [
   { id: 'NAP-001', nombre: 'NAP 1', ubicacion: 'Villa Canto', cap: '4/16', modelo: 'Caja NAP 1×16 PLC', cableOrigen: 1 },
@@ -1024,7 +1059,7 @@ function onboardingSaltar() { preAuthMostrar('login'); }
 setTimeout(function() { if (document.getElementById('view-splash').classList.contains('active')) preAuthMostrar('onboarding'); }, 1800);
 
 
-const titulos = { inicio: 'Inicio', clientes: 'Clientes', red: 'Red FTTH', tickets: 'Tickets', mas: 'Más', usuarios: 'Usuarios del equipo', 'cliente-detalle': 'Detalle del cliente', 'nueva-instalacion': 'Nueva instalación', checklist: 'Checklist de instalación', 'nap-full': 'Detalle de NAP', 'nuevo-ticket': 'Nuevo ticket', reportes: 'Reportes y estadísticas', configuracion: 'Configuración', 'nuevo-proyecto': 'Nuevo proyecto', 'proyecto-detalle': 'Detalle del proyecto' };
+const titulos = { inicio: 'Inicio', clientes: 'Clientes', red: 'Red FTTH', tickets: 'Tickets', mas: 'Más', usuarios: 'Usuarios del equipo', 'cliente-detalle': 'Detalle del cliente', 'nueva-instalacion': 'Nueva instalación', 'nuevo-cliente': 'Registrar cliente', checklist: 'Checklist de instalación', 'nap-full': 'Detalle de NAP', 'nuevo-ticket': 'Nuevo ticket', reportes: 'Reportes y estadísticas', configuracion: 'Configuración', 'nuevo-proyecto': 'Nuevo proyecto', 'proyecto-detalle': 'Detalle del proyecto' };
 
 function mostrar(id, guardarHistorial) {
   if (guardarHistorial === undefined) guardarHistorial = true;
@@ -1032,7 +1067,7 @@ function mostrar(id, guardarHistorial) {
   document.getElementById('view-' + id).classList.add('active');
   document.getElementById('header-title').textContent = titulos[id] || 'JAAD Telecom';
 
-  const esSub = (id === 'usuarios' || id === 'cliente-detalle' || id === 'nueva-instalacion' || id === 'checklist' || id === 'nap-full' || id === 'nuevo-ticket' || id === 'reportes' || id === 'configuracion' || id === 'nuevo-proyecto' || id === 'proyecto-detalle');
+  const esSub = (id === 'usuarios' || id === 'cliente-detalle' || id === 'nueva-instalacion' || id === 'nuevo-cliente' || id === 'checklist' || id === 'nap-full' || id === 'nuevo-ticket' || id === 'reportes' || id === 'configuracion' || id === 'nuevo-proyecto' || id === 'proyecto-detalle');
   document.getElementById('btn-back').style.display = esSub ? 'inline-block' : 'none';
   document.getElementById('brand-block').style.display = esSub ? 'none' : 'flex';
   document.querySelector('nav.bottomnav').style.display = esSub ? 'none' : 'flex';
@@ -1056,6 +1091,41 @@ function actualizarInicioPorRol() {
   document.getElementById('kpi-grid-admin').style.display = esTecnico ? 'none' : 'grid';
   document.getElementById('kpi-grid-tecnico').style.display = esTecnico ? 'grid' : 'none';
   document.getElementById('card-tickets-recientes').style.display = esTecnico ? 'none' : 'block';
+
+  const activos = clientesBase.filter(function (c) { return c.estado === 'Activo'; }).length;
+  const pendientes = clientesBase.filter(function (c) { return c.estado === 'Pendiente'; }).length;
+  const ticketsAbiertos = ticketsBase.filter(function (t) { return t.estado !== 'Cerrado'; }).length;
+
+  mapaAsegurarDatos();
+
+  document.getElementById('inicio-clientes-activos').textContent = activos;
+  document.getElementById('inicio-clientes-pendientes').textContent = pendientes;
+  document.getElementById('inicio-tickets-abiertos').textContent = ticketsAbiertos;
+  document.getElementById('inicio-elementos-mapa').textContent = mapaElements.length;
+
+  document.getElementById('inicio-tec-clientes-activos').textContent = activos;
+  document.getElementById('inicio-tec-instalaciones').textContent = ticketsBase.filter(function (t) {
+    return t.titulo.indexOf('Nueva conexión') === 0 && t.estado === 'Cerrado';
+  }).length;
+  document.getElementById('inicio-tec-tickets').textContent = ticketsAbiertos;
+
+  renderConsumoRed();
+}
+
+/* Consumo de red: por ahora no hay de dónde sacar tráfico real (eso lo da
+   Mikrowisp). Esto ya queda listo para conectarse solo: en cuanto
+   configApp.mikrowispUrl / mikrowispToken tengan datos reales y exista la
+   sincronización, esta función es el único lugar que hay que tocar para
+   pintar la gráfica de verdad — el resto de la app no cambia. */
+function renderConsumoRed() {
+  const cont = document.getElementById('consumo-red-cuerpo');
+  if (!cont) return;
+  const conectado = !!(configApp.mikrowispUrl && configApp.mikrowispToken);
+  if (!conectado) {
+    cont.innerHTML = '<div class="demo-note" style="text-align:left;">Aquí vas a ver el consumo real de tu red en cuanto conectes Mikrowisp. <a class="link" onclick="mostrar(\'configuracion\')">Conectar en Configuración</a></div>';
+  } else {
+    cont.innerHTML = '<div class="demo-note" style="text-align:left;">Mikrowisp ya está conectado. En cuanto quede armada la sincronización de datos, el consumo real de tu red va a aparecer aquí mismo, sin que tengas que cambiar nada.</div>';
+  }
 }
 function actualizarTabsRedPorRol() {
   const esTecnico = sesionActual && sesionActual.rol === 'tecnico';
@@ -1111,8 +1181,9 @@ function crearTicketManual() {
 
   const cliente = clienteId ? clientesBase.find(c => c.id == clienteId) : null;
   const titulo = tipo + (cliente ? ' — ' + cliente.direccion : '');
-  const nuevoId = Math.max(...ticketsBase.map(t => t.id)) + 1;
+  const nuevoId = ticketsBase.reduce(function (m, t) { return Math.max(m, t.id); }, 458) + 1;
   ticketsBase.unshift({ id: nuevoId, titulo: titulo, estado: 'Abierto', fecha: '16 sep 2026 · ' + new Date().toTimeString().slice(0, 5), prioridad: prioridad, descripcion: desc });
+  guardarTickets(ticketsBase);
   mostrar('tickets');
 }
 
@@ -1204,8 +1275,16 @@ function wizardSiguiente() {
 }
 
 function finalizarInstalacion() {
-  const nuevoId = Math.max(...ticketsBase.map(t => t.id)) + 1;
-  ticketsBase.unshift({ id: nuevoId, titulo: 'Nueva conexión — ' + wizardData.direccion, estado: 'En proceso', fecha: wizardData.fecha + ' · ' + wizardData.hora });
+  const nuevoClienteId = clienteContadorId++;
+  clientesBase.push({
+    id: nuevoClienteId, nombre: wizardData.nombre, direccion: wizardData.direccion,
+    plan: wizardData.paquete + ' Mbps', estado: 'Pendiente', ip: '—', rx: null, tx: null,
+    pago: 'Pendiente de instalación', telefono: wizardData.telefono
+  });
+  guardarClientes(clientesBase);
+  const nuevoId = ticketsBase.reduce(function (m, t) { return Math.max(m, t.id); }, 458) + 1;
+  ticketsBase.unshift({ id: nuevoId, titulo: 'Nueva conexión — ' + wizardData.direccion, estado: 'En proceso', fecha: wizardData.fecha + ' · ' + wizardData.hora, clienteId: nuevoClienteId });
+  guardarTickets(ticketsBase);
   mostrar('tickets');
 }
 
@@ -1219,6 +1298,41 @@ function renderTicketsPreview() {
   ).join('');
 }
 
+function abrirNuevoCliente() {
+  document.getElementById('nc-nombre').value = '';
+  document.getElementById('nc-direccion').value = '';
+  document.getElementById('nc-telefono').value = '';
+  document.getElementById('nc-plan').innerHTML = configApp.paquetes.map(function (p) { return '<option value="' + p.nombre + '">' + p.nombre + '</option>'; }).join('');
+  document.getElementById('nc-estado').value = 'Activo';
+  document.getElementById('nc-pago').value = 'Al corriente';
+  document.getElementById('nc-ip').value = '';
+  document.getElementById('nc-rx').value = '';
+  document.getElementById('nc-tx').value = '';
+  document.getElementById('nc-error').textContent = '';
+  mostrar('nuevo-cliente');
+}
+function guardarNuevoCliente() {
+  const nombre = document.getElementById('nc-nombre').value.trim();
+  const direccion = document.getElementById('nc-direccion').value.trim();
+  const err = document.getElementById('nc-error');
+  if (!nombre || !direccion) { err.textContent = 'Nombre y dirección son requeridos.'; return; }
+  const rx = document.getElementById('nc-rx').value;
+  const tx = document.getElementById('nc-tx').value;
+  clientesBase.push({
+    id: clienteContadorId++,
+    nombre: nombre,
+    direccion: direccion,
+    telefono: document.getElementById('nc-telefono').value.trim(),
+    plan: document.getElementById('nc-plan').value,
+    estado: document.getElementById('nc-estado').value,
+    pago: document.getElementById('nc-pago').value,
+    ip: document.getElementById('nc-ip').value.trim() || '—',
+    rx: rx ? parseFloat(rx) : null,
+    tx: tx ? parseFloat(tx) : null,
+  });
+  guardarClientes(clientesBase);
+  mostrar('clientes');
+}
 function renderTabsClientes() {
   const cats = ['Todos', 'Activo', 'Pendiente', 'Suspendido'];
   document.getElementById('tabs-clientes').innerHTML = cats.map(c =>
@@ -1492,11 +1606,21 @@ function mapaEliminarElemento(id) {
 function mapaPersistir() {
   try { localStorage.setItem(MAPA_STORAGE_KEY, JSON.stringify(mapaElements)); } catch (e) {}
 }
-function mapaCargarElementos() {
+let mapaDatosCargados = false;
+function mapaAsegurarDatos() {
+  if (mapaDatosCargados) return;
   try {
     const raw = localStorage.getItem(MAPA_STORAGE_KEY);
     mapaElements = raw ? JSON.parse(raw) : MAPA_SEED_ELEMENTS.slice();
   } catch (e) { mapaElements = MAPA_SEED_ELEMENTS.slice(); }
+  try {
+    const rawF = localStorage.getItem(MAPA_FIBER_STORAGE_KEY);
+    mapaFiberLines = rawF ? JSON.parse(rawF) : MAPA_SEED_FIBERS.slice();
+  } catch (e) { mapaFiberLines = MAPA_SEED_FIBERS.slice(); }
+  mapaDatosCargados = true;
+}
+function mapaCargarElementos() {
+  mapaAsegurarDatos();
   mapaElements.forEach(mapaAddMarker);
   mapaUpdateCounts();
 }
@@ -1505,10 +1629,7 @@ function mapaPersistirFibras() {
   try { localStorage.setItem(MAPA_FIBER_STORAGE_KEY, JSON.stringify(mapaFiberLines)); } catch (e) {}
 }
 function mapaCargarFibras() {
-  try {
-    const raw = localStorage.getItem(MAPA_FIBER_STORAGE_KEY);
-    mapaFiberLines = raw ? JSON.parse(raw) : MAPA_SEED_FIBERS.slice();
-  } catch (e) { mapaFiberLines = MAPA_SEED_FIBERS.slice(); }
+  mapaAsegurarDatos();
   mapaFiberLines.forEach(mapaAddFiberLine);
 }
 
@@ -2779,7 +2900,20 @@ function finalizarChecklist() {
 
   err.textContent = '';
   const t = ticketsBase.find(x => x.id === checklistTicketId);
-  if (t) t.estado = 'Cerrado';
+  if (t) {
+    t.estado = 'Cerrado';
+    if (t.clienteId) {
+      const c = clientesBase.find(function (x) { return x.id === t.clienteId; });
+      if (c) {
+        c.estado = 'Activo';
+        c.pago = 'Al corriente';
+        c.rx = rx;
+        c.tx = tx;
+        guardarClientes(clientesBase);
+      }
+    }
+  }
+  guardarTickets(ticketsBase);
   mostrar('tickets');
 }
 

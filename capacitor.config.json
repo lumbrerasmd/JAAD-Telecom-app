@@ -2,9 +2,7 @@
   "appId": "com.jaadtelecom.app",
   "appName": "JAAD Telecom",
   "webDir": "www",
-  "bundledWebRuntime": false,
-  "backgroundColor": "#0A1830",
-  "android": {
-    "backgroundColor": "#0A1830"
+  "server": {
+    "androidScheme": "https"
   }
 }

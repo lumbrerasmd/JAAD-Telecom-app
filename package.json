@@ -1,12 +1,10 @@
 {
   "name": "jaad-telecom-app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Empaquetado Android (Capacitor) del prototipo JAAD Telecom",
+  "description": "App de gestión de red FTTH de JAAD Telecom, empaquetada como app de Android con Capacitor.",
   "scripts": {
-    "android:add": "cap add android",
-    "android:sync": "cap sync android",
-    "android:open": "cap open android"
+    "sync": "cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",

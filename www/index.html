@@ -1447,6 +1447,7 @@ function renderClienteDetalle() {
 
   let cuerpo = '';
   if (clienteTabActual === 'resumen') {
+    const ticketInstalacion = ticketsBase.find(function (t) { return t.clienteId === c.id && t.instalacion; });
     cuerpo =
       '<div class="section-card">' +
         '<div class="section-title">Servicio</div>' +
@@ -1456,7 +1457,8 @@ function renderClienteDetalle() {
         '<div class="detail-row"><span class="k">Estado de pago</span><span class="v">' + c.pago + '</span></div>' +
         '<div class="detail-row"><span class="k">Dirección</span><span class="v">' + c.direccion + '</span></div>' +
       '</div>' +
-      '<button class="btn-primary" style="background:linear-gradient(140deg,#1FAF54,#25D366); color:#06210F;" onclick="alert(\'Aquí abriríamos WhatsApp con el número del cliente.\')"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 14.5a4 4 0 01-4 4H8.5L4 21.5V7.5a4 4 0 014-4h9a4 4 0 014 4v7z"/></svg> Contactar por WhatsApp</button>';
+      '<button class="btn-primary" style="background:linear-gradient(140deg,#1FAF54,#25D366); color:#06210F;" onclick="alert(\'Aquí abriríamos WhatsApp con el número del cliente.\')"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 14.5a4 4 0 01-4 4H8.5L4 21.5V7.5a4 4 0 014-4h9a4 4 0 014 4v7z"/></svg> Contactar por WhatsApp</button>' +
+      (ticketInstalacion ? '<button class="btn-primary" style="margin-top:10px;" onclick="descargarPDFTicket(' + ticketInstalacion.id + ', event)"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 2.5h8l5 5v14H6z"/><path d="M14 2.5v5h5"/><path d="M9 13h6M9 17h6"/></svg> Descargar PDF de instalación</button>' : '');
   }
   else if (clienteTabActual === 'servicios') {
     cuerpo =
@@ -2749,7 +2751,7 @@ function renderTickets() {
     return (
       '<div class="list-item" ' + (esInstalacion ? 'onclick="abrirChecklist(' + t.id + ')"' : '') + '>' +
         '<div class="info"><div class="name">#' + t.id + ' · ' + t.titulo + '</div><div class="sub">' + t.fecha + '</div></div>' +
-        (t.instalacion ? '<span style="color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; flex:none; margin-right:10px;" onclick="event.stopPropagation(); descargarPDFTicket(' + t.id + ')">PDF</span>' : '') +
+        (t.instalacion ? '<button type="button" style="color:var(--accent); background:rgba(41,198,246,.12); border:1px solid var(--accent); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700; flex:none; margin-right:10px;" onclick="descargarPDFTicket(' + t.id + ', event)">PDF</button>' : '') +
         '<div class="status-pill status-' + t.estado.replace(' ', '-') + '">' + t.estado + '</div>' +
       '</div>'
     );
@@ -3047,11 +3049,56 @@ async function construirPDFInstalacion(t, cliente, datos) {
   return doc;
 }
 
+function blobABase64(blob) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onloadend = function () { resolve(String(reader.result).split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function descargarDocPDF(doc, nombreArchivo) {
   const blob = doc.output('blob');
+
+  // 1) Dentro de Claude (chat/artefacto): usa su propio mecanismo de descarga.
   const downloads = (typeof claude !== 'undefined' && claude.use) ? await claude.use('downloads') : null;
-  if (downloads) { await downloads.save({ filename: nombreArchivo, data: blob }); }
-  else { doc.save(nombreArchivo); }
+  if (downloads) { await downloads.save({ filename: nombreArchivo, data: blob }); return; }
+
+  // 2) APK de Android (Capacitor): un WebView normal no sabe descargar un
+  // blob generado en JS. Se guarda el PDF como archivo real y se abre en
+  // el navegador (Chrome), que sí sabe mostrarlo/descargarlo/compartirlo.
+  const esNativo = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (esNativo) {
+    const plugins = window.Capacitor.Plugins || {};
+    if (!plugins.Filesystem) {
+      alert('Este APK no tiene el plugin para guardar archivos. Hace falta recompilarlo con la versión más reciente del proyecto.');
+      return;
+    }
+    let resultado;
+    try {
+      const base64 = await blobABase64(blob);
+      resultado = await plugins.Filesystem.writeFile({ path: nombreArchivo, data: base64, directory: 'CACHE' });
+    } catch (e) {
+      console.error('No se pudo guardar el PDF en el teléfono:', e);
+      alert('No se pudo guardar el PDF en el teléfono. Detalle: ' + (e && e.message ? e.message : JSON.stringify(e)));
+      return;
+    }
+    const src = window.Capacitor.convertFileSrc ? window.Capacitor.convertFileSrc(resultado.uri) : resultado.uri;
+    if (plugins.Browser) {
+      try { await plugins.Browser.open({ url: src }); return; }
+      catch (e) { console.error('No se pudo abrir el navegador:', e); }
+    }
+    if (plugins.Share) {
+      try { await plugins.Share.share({ title: nombreArchivo, url: resultado.uri }); return; }
+      catch (e) { console.error('No se pudo abrir compartir:', e); }
+    }
+    alert('El PDF se guardó, pero no se pudo abrir automáticamente. Ruta: ' + resultado.uri);
+    return;
+  }
+
+  // 3) Navegador normal (Chrome/Safari en una PC o abriendo el archivo suelto).
+  doc.save(nombreArchivo);
 }
 
 /* Se llama al terminar el checklist: guarda los datos en el ticket (para
@@ -3078,7 +3125,8 @@ async function generarPDFInstalacion(t, cliente) {
 
 /* Botón "PDF" en la lista de Tickets: reconstruye el PDF desde los datos
    ya guardados en el ticket, sin necesitar el checklist abierto. */
-async function descargarPDFTicket(ticketId) {
+async function descargarPDFTicket(ticketId, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
   const t = ticketsBase.find(function (x) { return x.id === ticketId; });
   if (!t || !t.instalacion) { alert('Este ticket no tiene un reporte de instalación guardado.'); return; }
   const cliente = t.clienteId ? clientesBase.find(function (x) { return x.id === t.clienteId; }) : null;

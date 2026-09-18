@@ -480,6 +480,10 @@
             </select>
             <label class="field-label">IP (opcional)</label>
             <input class="field" id="nc-ip" placeholder="186.142.0.0">
+            <label class="field-label">NAP (opcional)</label>
+            <select class="field" id="nc-nap" onchange="cambiarNapNuevoCliente()"></select>
+            <label class="field-label">Puerto (opcional)</label>
+            <select class="field" id="nc-puerto"><option value="">— Elige una NAP primero —</option></select>
           </div>
           <div style="display:flex; gap:12px; margin-top:12px;">
             <div style="flex:1;">
@@ -689,28 +693,11 @@
           <input class="field" id="cl-serie" placeholder="Ej. ZTEG1234ABCD">
           <button class="btn-primary" id="btn-activar" onclick="activarServicio()" style="margin-top:12px;">Activar servicio</button>
           <div class="senal-estado" id="activacion-estado"></div>
-          <div class="demo-note" style="text-align:left; margin-top:8px;">En la versión conectada a Mikrowisp, este botón enviaría el NS/MAC para activar el servicio real. Aquí solo lo simulamos, pero por eso hasta no "activar" no se puede medir señal — igual que en campo.</div>
+          <div class="demo-note" style="text-align:left; margin-top:8px;">En la versión conectada a Mikrowisp y la OLT, este botón activaría el servicio real y la potencia óptica (RX/TX) se leería sola desde la OLT — ya no hay que capturarla a mano.</div>
         </div>
 
         <div class="section-card">
-          <div class="section-title">3. Medición de potencia óptica (ONT)</div>
-          <div style="display:flex; gap:12px;">
-            <div style="flex:1;">
-              <label class="field-label">RX (dBm)</label>
-              <input class="field" type="number" step="0.1" id="cl-rx" placeholder="-18.5" oninput="validarSenal()" disabled>
-              <div class="senal-estado" id="senal-rx-estado"></div>
-            </div>
-            <div style="flex:1;">
-              <label class="field-label">TX (dBm)</label>
-              <input class="field" type="number" step="0.1" id="cl-tx" placeholder="2.8" oninput="validarSenal()" disabled>
-              <div class="senal-estado" id="senal-tx-estado"></div>
-            </div>
-          </div>
-          <div class="demo-note" id="senal-bloqueada-nota" style="text-align:left; margin-top:8px;">Activa el servicio con el NS/MAC para poder medir la señal.</div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-title">4. Checklist</div>
+          <div class="section-title">3. Checklist</div>
           <label class="check-item"><input type="checkbox" id="cl-check-0"> ONT/ONU instalada y configurada</label>
           <label class="check-item"><input type="checkbox" id="cl-check-1"> Señal óptica dentro del rango</label>
           <label class="check-item"><input type="checkbox" id="cl-check-2"> Servicio probado (navegación / speedtest)</label>
@@ -718,7 +705,7 @@
         </div>
 
         <div class="section-card">
-          <div class="section-title">5. Firma del cliente <a class="link" style="font-size:12px;" onclick="limpiarFirma()">Limpiar</a></div>
+          <div class="section-title">4. Firma del cliente <a class="link" style="font-size:12px;" onclick="limpiarFirma()">Limpiar</a></div>
           <canvas id="firma-canvas" width="300" height="140"></canvas>
         </div>
 
@@ -1144,7 +1131,7 @@ function volver() {
   mostrar(anterior);
 }
 // ============== NUEVA INSTALACIÓN (wizard de 5 pasos) ==============
-const wizardPasos = ['Cliente', 'Paquete', 'Cita', 'Ubicación', 'Técnico'];
+const wizardPasos = ['Cliente', 'Paquete', 'Cita', 'NAP', 'Técnico'];
 let wizardPasoActual = 1;
 let wizardData = {};
 
@@ -1154,7 +1141,7 @@ function accionRapida() {
     abrirNuevoTicket();
   } else {
     wizardPasoActual = 1;
-    wizardData = { nombre: '', telefono: '', direccion: '', paquete: null, fecha: '', hora: '', tecnicoId: null };
+    wizardData = { nombre: '', telefono: '', direccion: '', paquete: null, fecha: '', hora: '', napId: null, puerto: null, tecnicoId: null };
     mostrar('nueva-instalacion');
     renderWizard();
   }
@@ -1226,9 +1213,25 @@ function renderWizard() {
       '<label class="field-label">Hora</label><input class="field" type="time" id="wz-hora" value="' + wizardData.hora + '">';
   }
   else if (wizardPasoActual === 4) {
-    cont.innerHTML =
-      '<label class="field-label">Dirección de la instalación</label><input class="field" id="wz-direccion2" value="' + wizardData.direccion + '" oninput="wizardData.direccion=this.value;">' +
-      '<div class="map-placeholder"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M12 21s7-7.6 7-12.2a7 7 0 10-14 0C5 13.4 12 21 12 21z"/><circle cx="12" cy="9" r="2.4"/></svg> Aquí se mostraría el pin en el mapa real<br>(cuando conectemos MapLibre / Google Maps)</div>';
+    mapaAsegurarDatos();
+    const naps = mapaElements.filter(function (e) { return e.type === 'nap'; });
+    if (!naps.length) {
+      cont.innerHTML = '<div class="empty-state">Aún no tienes NAPs cargadas en el mapa.<br>Ve a Red → Mapa para agregar una — por ahora puedes seguir sin asignar puerto.</div>';
+    } else {
+      const napSel = naps.find(function (n) { return n.id === wizardData.napId; });
+      cont.innerHTML =
+        '<label class="field-label">NAP</label>' +
+        naps.map(function (n) {
+          n.puertos = n.puertos || [];
+          const libres = n.puertos.length ? n.puertos.filter(function (p) { return !p.ocupado; }).length : '—';
+          const totalTxt = n.puertos.length ? ('/' + n.puertos.length) : '';
+          return '<div class="package-card ' + (wizardData.napId === n.id ? 'selected' : '') + '" onclick="wizardData.napId=\'' + n.id + '\'; wizardData.puerto=null; renderWizard();">' +
+            '<div><div class="p-name">' + n.nombre + (n.colonia ? ' · ' + n.colonia : '') + '</div><div class="p-price">' + libres + totalTxt + ' puertos libres</div></div>' +
+            '<div class="p-check"></div>' +
+          '</div>';
+        }).join('') +
+        (napSel ? renderWizardPuertos(napSel) : '');
+    }
   }
   else if (wizardPasoActual === 5) {
     const tecnicos = usuarios.filter(u => u.rol === 'tecnico');
@@ -1244,6 +1247,20 @@ function renderWizard() {
       ).join('');
     }
   }
+}
+
+function renderWizardPuertos(nap) {
+  if (!nap.puertos || !nap.puertos.length) {
+    nap.puertos = Array.from({ length: 8 }, function () { return { ocupado: false, cliente: '' }; });
+  }
+  return '<label class="field-label" style="margin-top:14px;">Puerto</label>' +
+    '<div style="display:flex; flex-wrap:wrap; gap:8px;">' +
+    nap.puertos.map(function (p, i) {
+      const ocupado = !!p.ocupado;
+      const sel = wizardData.puerto === i;
+      return '<div ' + (ocupado ? '' : ('onclick="wizardData.puerto=' + i + '; renderWizard();"')) + ' title="' + (ocupado ? 'Ocupado' + (p.cliente ? ' · ' + p.cliente : '') : 'Libre') + '" style="width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:' + (ocupado ? 'not-allowed' : 'pointer') + '; background:' + (sel ? 'var(--accent-2)' : (ocupado ? 'var(--card-2)' : 'var(--card)')) + '; color:' + (ocupado ? 'var(--text-dim)' : (sel ? '#06141F' : 'var(--text)')) + '; border:1px solid var(--border); opacity:' + (ocupado ? '.5' : '1') + ';">' + (i + 1) + '</div>';
+    }).join('') +
+    '</div>';
 }
 
 function wizardAtras() {
@@ -1264,7 +1281,9 @@ function wizardSiguiente() {
     wizardData.hora = document.getElementById('wz-hora').value;
     if (!wizardData.fecha || !wizardData.hora) { err.textContent = 'Fecha y hora son requeridas.'; return; }
   } else if (wizardPasoActual === 4) {
-    if (!wizardData.direccion) { err.textContent = 'La dirección es requerida.'; return; }
+    mapaAsegurarDatos();
+    const hayNaps = mapaElements.some(function (e) { return e.type === 'nap'; });
+    if (hayNaps && (wizardData.napId === null || wizardData.puerto === null)) { err.textContent = 'Elige la NAP y el puerto donde va a quedar conectado.'; return; }
   } else if (wizardPasoActual === 5) {
     if (!wizardData.tecnicoId) { err.textContent = 'Asigna un técnico.'; return; }
     finalizarInstalacion();
@@ -1276,11 +1295,24 @@ function wizardSiguiente() {
 
 function finalizarInstalacion() {
   const nuevoClienteId = clienteContadorId++;
-  clientesBase.push({
+  const nuevoCliente = {
     id: nuevoClienteId, nombre: wizardData.nombre, direccion: wizardData.direccion,
     plan: wizardData.paquete + ' Mbps', estado: 'Pendiente', ip: '—', rx: null, tx: null,
-    pago: 'Pendiente de instalación', telefono: wizardData.telefono
-  });
+    pago: 'Pendiente de instalación', telefono: wizardData.telefono,
+  };
+  if (wizardData.napId !== null && wizardData.puerto !== null) {
+    const nap = mapaElements.find(function (e) { return e.id === wizardData.napId; });
+    if (nap && nap.puertos && nap.puertos[wizardData.puerto]) {
+      nap.puertos[wizardData.puerto].ocupado = true;
+      nap.puertos[wizardData.puerto].cliente = wizardData.nombre;
+      const m = mapaMarkers[nap.id];
+      if (m) m.setPopupContent(mapaPopupHtml(nap));
+      mapaPersistir();
+      nuevoCliente.napNombre = nap.nombre;
+      nuevoCliente.puerto = wizardData.puerto;
+    }
+  }
+  clientesBase.push(nuevoCliente);
   guardarClientes(clientesBase);
   const nuevoId = ticketsBase.reduce(function (m, t) { return Math.max(m, t.id); }, 458) + 1;
   ticketsBase.unshift({ id: nuevoId, titulo: 'Nueva conexión — ' + wizardData.direccion, estado: 'En proceso', fecha: wizardData.fecha + ' · ' + wizardData.hora, clienteId: nuevoClienteId });
@@ -1309,7 +1341,23 @@ function abrirNuevoCliente() {
   document.getElementById('nc-rx').value = '';
   document.getElementById('nc-tx').value = '';
   document.getElementById('nc-error').textContent = '';
+
+  mapaAsegurarDatos();
+  const naps = mapaElements.filter(function (e) { return e.type === 'nap'; });
+  document.getElementById('nc-nap').innerHTML = '<option value="">Sin asignar</option>' +
+    naps.map(function (n) { return '<option value="' + n.id + '">' + n.nombre + (n.colonia ? ' · ' + n.colonia : '') + '</option>'; }).join('');
+  cambiarNapNuevoCliente();
   mostrar('nuevo-cliente');
+}
+function cambiarNapNuevoCliente() {
+  const napId = document.getElementById('nc-nap').value;
+  const sel = document.getElementById('nc-puerto');
+  if (!napId) { sel.innerHTML = '<option value="">— Elige una NAP primero —</option>'; return; }
+  const nap = mapaElements.find(function (e) { return e.id === napId; });
+  if (!nap.puertos || !nap.puertos.length) nap.puertos = Array.from({ length: 8 }, function () { return { ocupado: false, cliente: '' }; });
+  sel.innerHTML = nap.puertos.map(function (p, i) {
+    return '<option value="' + i + '"' + (p.ocupado ? ' disabled' : '') + '>Puerto ' + (i + 1) + (p.ocupado ? ' (ocupado' + (p.cliente ? ' · ' + p.cliente : '') + ')' : ' (libre)') + '</option>';
+  }).join('');
 }
 function guardarNuevoCliente() {
   const nombre = document.getElementById('nc-nombre').value.trim();
@@ -1318,7 +1366,7 @@ function guardarNuevoCliente() {
   if (!nombre || !direccion) { err.textContent = 'Nombre y dirección son requeridos.'; return; }
   const rx = document.getElementById('nc-rx').value;
   const tx = document.getElementById('nc-tx').value;
-  clientesBase.push({
+  const nuevoCliente = {
     id: clienteContadorId++,
     nombre: nombre,
     direccion: direccion,
@@ -1329,7 +1377,22 @@ function guardarNuevoCliente() {
     ip: document.getElementById('nc-ip').value.trim() || '—',
     rx: rx ? parseFloat(rx) : null,
     tx: tx ? parseFloat(tx) : null,
-  });
+  };
+  const napId = document.getElementById('nc-nap').value;
+  const puertoIdx = document.getElementById('nc-puerto').value;
+  if (napId && puertoIdx !== '') {
+    const nap = mapaElements.find(function (e) { return e.id === napId; });
+    if (nap && nap.puertos && nap.puertos[puertoIdx]) {
+      nap.puertos[puertoIdx].ocupado = true;
+      nap.puertos[puertoIdx].cliente = nombre;
+      const m = mapaMarkers[nap.id];
+      if (m) m.setPopupContent(mapaPopupHtml(nap));
+      mapaPersistir();
+      nuevoCliente.napNombre = nap.nombre;
+      nuevoCliente.puerto = parseInt(puertoIdx, 10);
+    }
+  }
+  clientesBase.push(nuevoCliente);
   guardarClientes(clientesBase);
   mostrar('clientes');
 }
@@ -1361,12 +1424,7 @@ const historialClientes = {
 };
 function historialDe(c) {
   if (historialClientes[c.id]) return historialClientes[c.id];
-  const precio = { '50 Mbps': 300, '80 Mbps': 350, '120 Mbps': 380 }[c.plan] || 300;
-  return [ { fecha: '10 sep 2026', texto: 'Pago recibido $' + precio + '.00' }, { fecha: '02 sep 2026', texto: 'Instalación completada' } ];
-}
-function consumoDe(c) {
-  const num = parseInt(c.plan) || 0;
-  return { descarga: Math.round(num * 0.85), subida: Math.round(num * 0.7) };
+  return [{ fecha: '—', texto: 'Sin movimientos registrados todavía (esto se llenará solo en cuanto conectes Mikrowisp).' }];
 }
 
 let clienteActualId = null;
@@ -1401,20 +1459,18 @@ function renderClienteDetalle() {
       '<button class="btn-primary" style="background:linear-gradient(140deg,#1FAF54,#25D366); color:#06210F;" onclick="alert(\'Aquí abriríamos WhatsApp con el número del cliente.\')"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 14.5a4 4 0 01-4 4H8.5L4 21.5V7.5a4 4 0 014-4h9a4 4 0 014 4v7z"/></svg> Contactar por WhatsApp</button>';
   }
   else if (clienteTabActual === 'servicios') {
-    const cons = consumoDe(c);
     cuerpo =
       '<div class="section-card">' +
         '<div class="section-title">Plan actual</div>' +
         '<div class="detail-row"><span class="k">Velocidad</span><span class="v">' + c.plan + '</span></div>' +
         '<div class="detail-row"><span class="k">ONU / ONT</span><span class="v">V-SOL V2804AX15-R</span></div>' +
-        '<div class="detail-row"><span class="k">NAP asignado</span><span class="v">NAP-001 · Villa Canto</span></div>' +
+        '<div class="detail-row"><span class="k">NAP asignado</span><span class="v">' + (c.napNombre ? c.napNombre + ' · puerto ' + (c.puerto + 1) : '—') + '</span></div>' +
       '</div>' +
       '<div class="section-card">' +
         '<div class="section-title">Consumo actual</div>' +
-        '<div style="display:flex; gap:12px;">' +
-          '<div style="flex:1; text-align:center;"><div style="font-size:11px;color:var(--text-dim);">Descarga</div><div style="font-size:20px;font-weight:700;">' + cons.descarga + ' Mbps</div></div>' +
-          '<div style="flex:1; text-align:center;"><div style="font-size:11px;color:var(--text-dim);">Subida</div><div style="font-size:20px;font-weight:700;">' + cons.subida + ' Mbps</div></div>' +
-        '</div>' +
+        (configApp.mikrowispUrl && configApp.mikrowispToken
+          ? '<div class="demo-note" style="text-align:left;">Mikrowisp ya está conectado. En cuanto quede armada la sincronización de datos, el consumo real de este cliente va a aparecer aquí.</div>'
+          : '<div class="demo-note" style="text-align:left;">Aquí vas a ver el consumo real de este cliente en cuanto conectes Mikrowisp. <a class="link" onclick="mostrar(\'configuracion\')">Conectar en Configuración</a></div>') +
       '</div>';
   }
   else if (clienteTabActual === 'historial') {
@@ -2306,11 +2362,13 @@ function fusionarProyecto(id) {
 // Rasteriza el SVG del mapa (con la capa de Construcción siempre visible) a una imagen PNG
 // Captura una foto real del mapa Leaflet de ESTE proyecto (tiles satelitales,
 // marcadores y fibra tal como se ven en pantalla) para insertarla en el PDF.
-function generarImagenMapaProyecto() {
+async function generarImagenMapaProyecto() {
+  const el = document.getElementById('leaflet-map-proyecto');
+  if (!el || !window._leafletMapProyecto) return null;
+  const listo = await asegurarHtml2Canvas();
+  if (!listo) return null;
+  window._leafletMapProyecto.invalidateSize();
   return new Promise(function (resolve) {
-    const el = document.getElementById('leaflet-map-proyecto');
-    if (!el || !window.html2canvas || !window._leafletMapProyecto) { resolve(null); return; }
-    window._leafletMapProyecto.invalidateSize();
     setTimeout(function () {
       window.html2canvas(el, { useCORS: true, allowTaint: false, backgroundColor: '#0A1830', scale: 2, logging: false })
         .then(function (canvas) {
@@ -2324,6 +2382,12 @@ function generarImagenMapaProyecto() {
 async function descargarProyectoPDF(id) {
   const p = proyectosConstruccion.find(x => x.id === id);
   if (!p) return;
+  const listo = await asegurarJsPDF();
+  if (!listo) {
+    alert('No se pudo generar el PDF de este proyecto (sin conexión a internet en ese momento para cargar el generador de PDF). Intenta de nuevo con señal.');
+    return;
+  }
+  try {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -2351,15 +2415,15 @@ async function descargarProyectoPDF(id) {
   const blob = doc.output('blob');
   const nombreArchivo = 'Proyecto - ' + p.nombre + '.pdf';
 
-  try {
-    const downloads = (typeof claude !== 'undefined' && claude.use) ? await claude.use('downloads') : null;
-    if (downloads) {
-      await downloads.save({ filename: nombreArchivo, data: blob });
-    } else {
-      doc.save(nombreArchivo);
-    }
+  const downloads = (typeof claude !== 'undefined' && claude.use) ? await claude.use('downloads') : null;
+  if (downloads) {
+    await downloads.save({ filename: nombreArchivo, data: blob });
+  } else {
+    doc.save(nombreArchivo);
+  }
   } catch (err) {
-    console.error('No se pudo guardar el PDF:', err);
+    console.error('No se pudo generar/guardar el PDF del proyecto:', err);
+    alert('Hubo un problema generando el PDF de este proyecto. Detalle: ' + (err && err.message ? err.message : err));
   }
 }
 
@@ -2685,6 +2749,7 @@ function renderTickets() {
     return (
       '<div class="list-item" ' + (esInstalacion ? 'onclick="abrirChecklist(' + t.id + ')"' : '') + '>' +
         '<div class="info"><div class="name">#' + t.id + ' · ' + t.titulo + '</div><div class="sub">' + t.fecha + '</div></div>' +
+        (t.instalacion ? '<span style="color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; flex:none; margin-right:10px;" onclick="event.stopPropagation(); descargarPDFTicket(' + t.id + ')">PDF</span>' : '') +
         '<div class="status-pill status-' + t.estado.replace(' ', '-') + '">' + t.estado + '</div>' +
       '</div>'
     );
@@ -2797,13 +2862,6 @@ function abrirChecklist(ticketId) {
   document.getElementById('btn-activar').disabled = false;
   document.getElementById('btn-activar').textContent = 'Activar servicio';
   document.getElementById('activacion-estado').textContent = '';
-  document.getElementById('cl-rx').value = '';
-  document.getElementById('cl-tx').value = '';
-  document.getElementById('cl-rx').disabled = true;
-  document.getElementById('cl-tx').disabled = true;
-  document.getElementById('senal-bloqueada-nota').style.display = 'block';
-  document.getElementById('senal-rx-estado').textContent = '';
-  document.getElementById('senal-tx-estado').textContent = '';
   for (let i = 0; i < 4; i++) document.getElementById('cl-check-' + i).checked = false;
   document.getElementById('checklist-error').textContent = '';
 
@@ -2822,17 +2880,13 @@ function activarServicio() {
   document.getElementById('btn-activar').textContent = '✓ Servicio activado';
   estado.textContent = '✓ Servicio activado con NS ' + serie + ' (simulado)';
   estado.className = 'senal-estado senal-ok';
-
-  document.getElementById('cl-rx').disabled = false;
-  document.getElementById('cl-tx').disabled = false;
-  document.getElementById('senal-bloqueada-nota').style.display = 'none';
 }
 
 function cargarFoto(idx, input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
-  fotosChecklist[idx] = url;
+  fotosChecklist[idx] = { url: url, file: file };
   const slot = document.getElementById('foto-slot-' + idx);
   slot.classList.add('lista');
   const img = document.createElement('img');
@@ -2844,20 +2898,6 @@ function cargarFoto(idx, input) {
   slot.appendChild(check);
 }
 
-function validarSenal() {
-  const rx = parseFloat(document.getElementById('cl-rx').value);
-  const tx = parseFloat(document.getElementById('cl-tx').value);
-  const rxEl = document.getElementById('senal-rx-estado');
-  const txEl = document.getElementById('senal-tx-estado');
-
-  if (isNaN(rx)) { rxEl.textContent = ''; }
-  else if (rx <= -8 && rx >= -27) { rxEl.textContent = '✓ OK'; rxEl.className = 'senal-estado senal-ok'; }
-  else { rxEl.textContent = '⚠ Fuera de rango (-8 a -27 dBm)'; rxEl.className = 'senal-estado senal-mal'; }
-
-  if (isNaN(tx)) { txEl.textContent = ''; }
-  else if (tx >= 0 && tx <= 5) { txEl.textContent = '✓ OK'; txEl.className = 'senal-estado senal-ok'; }
-  else { txEl.textContent = '⚠ Fuera de rango (0 a 5 dBm)'; txEl.className = 'senal-estado senal-mal'; }
-}
 
 function inicializarFirma() {
   const canvas = document.getElementById('firma-canvas');
@@ -2888,32 +2928,195 @@ function limpiarFirma() {
   firmaTieneTrazo = false;
 }
 
-function finalizarChecklist() {
+/* ---- PDF de instalación: folio + cliente + checklist + fotos + firma ---- */
+/* ---- Asegura que una librería cargada por <script src> esté disponible,
+   reintentando la carga una vez si falló la primera (por ejemplo, por señal
+   floja) — antes esto fallaba en silencio y el PDF simplemente no salía. ---- */
+function cargarScript(src) {
+  return new Promise(function (resolve, reject) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = function () { resolve(); };
+    s.onerror = function () { reject(new Error('No se pudo cargar ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+async function asegurarJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return true;
+  try {
+    await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  } catch (e) {}
+  return !!(window.jspdf && window.jspdf.jsPDF);
+}
+async function asegurarHtml2Canvas() {
+  if (window.html2canvas) return true;
+  try {
+    await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  } catch (e) {}
+  return !!window.html2canvas;
+}
+
+function cargarImagenComoDataURL(file) {
+  return new Promise(function (resolve) {
+    const reader = new FileReader();
+    reader.onload = function (e) { resolve(e.target.result); };
+    reader.readAsDataURL(file);
+  });
+}
+function obtenerDimensionesImagen(dataUrl) {
+  return new Promise(function (resolve) {
+    const img = new Image();
+    img.onload = function () { resolve({ w: img.naturalWidth || 4, h: img.naturalHeight || 3 }); };
+    img.onerror = function () { resolve({ w: 4, h: 3 }); };
+    img.src = dataUrl;
+  });
+}
+/* ---- Recolecta fotos (como dataURL) + firma del checklist actual, para
+   guardarlas en el ticket y poder generar el PDF ahora o después. ---- */
+async function recolectarDatosInstalacion() {
+  const fotos = [];
+  for (let i = 0; i < 3; i++) {
+    const f = fotosChecklist[i];
+    if (f && f.file) {
+      try { fotos.push(await cargarImagenComoDataURL(f.file)); }
+      catch (e) { fotos.push(null); }
+    } else {
+      fotos.push(null);
+    }
+  }
+  const firma = firmaCtx ? firmaCtx.canvas.toDataURL('image/png') : null;
+  const serie = document.getElementById('cl-serie').value.trim();
+  return { fotos: fotos, firma: firma, serie: serie };
+}
+
+/* ---- Arma el documento PDF a partir de datos ya guardados (dataURLs),
+   sin depender de que el checklist siga abierto en pantalla. ---- */
+async function construirPDFInstalacion(t, cliente, datos) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 18;
+
+  doc.setFontSize(16); doc.text('Reporte de instalación — JAAD Telecom', 14, y); y += 10;
+  doc.setFontSize(10);
+  doc.text('Ticket: #' + (t ? t.id : '—') + ' · ' + (t ? t.titulo : ''), 14, y); y += 6;
+  doc.text('Fecha: ' + (t ? t.fecha : ''), 14, y); y += 6;
+  if (cliente) {
+    doc.text('Cliente: ' + cliente.nombre, 14, y); y += 6;
+    doc.text('Dirección: ' + cliente.direccion, 14, y); y += 6;
+    doc.text('Plan: ' + cliente.plan, 14, y); y += 6;
+    if (cliente.napNombre) { doc.text('NAP / puerto: ' + cliente.napNombre + ' · puerto ' + (cliente.puerto + 1), 14, y); y += 6; }
+  }
+  if (datos.serie) { doc.text('Número de serie / MAC: ' + datos.serie, 14, y); y += 6; }
+  y += 4;
+
+  doc.setFontSize(12); doc.text('Checklist confirmado:', 14, y); y += 6;
+  doc.setFontSize(10);
+  ['ONT/ONU instalada y configurada', 'Señal óptica dentro del rango', 'Servicio probado (navegación / speedtest)', 'Cliente informado y comprobante entregado']
+    .forEach(function (txt) { doc.text('✓ ' + txt, 16, y); y += 6; });
+  y += 4;
+
+  doc.setFontSize(12); doc.text('Evidencia fotográfica:', 14, y); y += 6;
+  const etiquetasFoto = ['ONT instalada', 'Router / equipo', 'Fachada / poste'];
+  let x = 14;
+  const boxW = 58, boxH = 50;
+  for (let i = 0; i < 3; i++) {
+    const dataUrl = datos.fotos[i];
+    if (dataUrl) {
+      try {
+        const dim = await obtenerDimensionesImagen(dataUrl);
+        const escala = Math.min(boxW / dim.w, boxH / dim.h);
+        const w = dim.w * escala, h = dim.h * escala;
+        doc.addImage(dataUrl, 'JPEG', x + (boxW - w) / 2, y + (boxH - h) / 2, w, h);
+      } catch (e) {}
+    }
+    doc.setFontSize(8);
+    doc.text(etiquetasFoto[i], x, y + boxH + 5);
+    x += boxW + 4;
+  }
+  y += boxH + 14;
+
+  if (y > 210) { doc.addPage(); y = 20; }
+  doc.setFontSize(12); doc.text('Firma del cliente:', 14, y); y += 4;
+  if (datos.firma) {
+    doc.addImage(datos.firma, 'PNG', 14, y, 80, 35);
+  }
+  y += 40;
+  doc.setFontSize(9);
+  doc.text('Firmado por: ' + (cliente ? cliente.nombre : '—'), 14, y);
+
+  return doc;
+}
+
+async function descargarDocPDF(doc, nombreArchivo) {
+  const blob = doc.output('blob');
+  const downloads = (typeof claude !== 'undefined' && claude.use) ? await claude.use('downloads') : null;
+  if (downloads) { await downloads.save({ filename: nombreArchivo, data: blob }); }
+  else { doc.save(nombreArchivo); }
+}
+
+/* Se llama al terminar el checklist: guarda los datos en el ticket (para
+   poder volver a descargar el PDF después, desde la lista de Tickets) y
+   de una vez intenta descargarlo. */
+async function generarPDFInstalacion(t, cliente) {
+  const datos = await recolectarDatosInstalacion();
+  if (t) { t.instalacion = datos; guardarTickets(ticketsBase); }
+
+  const listo = await asegurarJsPDF();
+  if (!listo) {
+    alert('El reporte de esta instalación ya quedó guardado — puedes descargar el PDF más tarde desde este ticket en la lista de Tickets, cuando tengas señal.');
+    return;
+  }
+  try {
+    const doc = await construirPDFInstalacion(t, cliente, datos);
+    const nombreArchivo = 'Instalacion - ' + (cliente ? cliente.nombre : ('ticket-' + (t ? t.id : ''))) + '.pdf';
+    await descargarDocPDF(doc, nombreArchivo);
+  } catch (err) {
+    console.error('No se pudo generar el PDF de instalación:', err);
+    alert('El reporte de esta instalación quedó guardado, pero hubo un problema generando el PDF en este momento. Puedes volver a intentarlo desde este ticket en la lista de Tickets.');
+  }
+}
+
+/* Botón "PDF" en la lista de Tickets: reconstruye el PDF desde los datos
+   ya guardados en el ticket, sin necesitar el checklist abierto. */
+async function descargarPDFTicket(ticketId) {
+  const t = ticketsBase.find(function (x) { return x.id === ticketId; });
+  if (!t || !t.instalacion) { alert('Este ticket no tiene un reporte de instalación guardado.'); return; }
+  const cliente = t.clienteId ? clientesBase.find(function (x) { return x.id === t.clienteId; }) : null;
+  const listo = await asegurarJsPDF();
+  if (!listo) { alert('No se pudo generar el PDF en este momento (sin conexión a internet para cargar el generador). Intenta de nuevo con señal.'); return; }
+  try {
+    const doc = await construirPDFInstalacion(t, cliente, t.instalacion);
+    const nombreArchivo = 'Instalacion - ' + (cliente ? cliente.nombre : ('ticket-' + t.id)) + '.pdf';
+    await descargarDocPDF(doc, nombreArchivo);
+  } catch (err) {
+    console.error('No se pudo generar el PDF del ticket:', err);
+    alert('Hubo un problema generando el PDF. Detalle: ' + (err && err.message ? err.message : err));
+  }
+}
+
+async function finalizarChecklist() {
   const err = document.getElementById('checklist-error');
   if (fotosChecklist.some(f => !f)) { err.textContent = 'Faltan fotos de evidencia.'; return; }
   if (!servicioActivado) { err.textContent = 'Activa el servicio con el NS/MAC antes de continuar.'; return; }
-  const rx = parseFloat(document.getElementById('cl-rx').value);
-  const tx = parseFloat(document.getElementById('cl-tx').value);
-  if (isNaN(rx) || isNaN(tx)) { err.textContent = 'Captura la medición de señal RX/TX.'; return; }
   for (let i = 0; i < 4; i++) { if (!document.getElementById('cl-check-' + i).checked) { err.textContent = 'Completa todos los puntos del checklist.'; return; } }
   if (!firmaTieneTrazo) { err.textContent = 'Falta la firma del cliente.'; return; }
 
   err.textContent = '';
   const t = ticketsBase.find(x => x.id === checklistTicketId);
+  let cliente = null;
   if (t) {
     t.estado = 'Cerrado';
     if (t.clienteId) {
-      const c = clientesBase.find(function (x) { return x.id === t.clienteId; });
-      if (c) {
-        c.estado = 'Activo';
-        c.pago = 'Al corriente';
-        c.rx = rx;
-        c.tx = tx;
+      cliente = clientesBase.find(function (x) { return x.id === t.clienteId; });
+      if (cliente) {
+        cliente.estado = 'Activo';
+        cliente.pago = 'Al corriente';
         guardarClientes(clientesBase);
       }
     }
   }
   guardarTickets(ticketsBase);
+  await generarPDFInstalacion(t, cliente);
   mostrar('tickets');
 }
 

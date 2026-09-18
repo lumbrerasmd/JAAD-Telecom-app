@@ -2749,7 +2749,7 @@ function renderTickets() {
     return (
       '<div class="list-item" ' + (esInstalacion ? 'onclick="abrirChecklist(' + t.id + ')"' : '') + '>' +
         '<div class="info"><div class="name">#' + t.id + ' · ' + t.titulo + '</div><div class="sub">' + t.fecha + '</div></div>' +
-        (t.instalacion ? '<span style="color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; flex:none; margin-right:10px;" onclick="event.stopPropagation(); descargarPDFTicket(' + t.id + ')">PDF</span>' : '') +
+        (t.instalacion ? '<span style="color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; flex:none; margin-right:10px;" onclick="descargarPDFTicket(' + t.id + ', event)">PDF</span>' : '') +
         '<div class="status-pill status-' + t.estado.replace(' ', '-') + '">' + t.estado + '</div>' +
       '</div>'
     );
@@ -3064,24 +3064,35 @@ async function descargarDocPDF(doc, nombreArchivo) {
   if (downloads) { await downloads.save({ filename: nombreArchivo, data: blob }); return; }
 
   // 2) APK de Android (Capacitor): un WebView normal no sabe descargar un
-  // blob generado en JS, así que se guarda con el plugin de archivos y se
-  // abre el panel de "compartir/guardar" del propio Android.
-  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-    try {
-      const base64 = await blobABase64(blob);
-      const { Filesystem, Share } = window.Capacitor.Plugins;
-      const resultado = await Filesystem.writeFile({ path: nombreArchivo, data: base64, directory: 'CACHE' });
-      if (Share) {
-        await Share.share({ title: nombreArchivo, url: resultado.uri });
-      } else {
-        alert('PDF guardado como "' + nombreArchivo + '". Ábrelo desde la app de Archivos de tu teléfono.');
-      }
-      return;
-    } catch (e) {
-      console.error('No se pudo guardar/compartir el PDF en la app nativa:', e);
-      alert('No se pudo guardar el PDF en el teléfono. Detalle: ' + (e && e.message ? e.message : e));
+  // blob generado en JS. Se guarda el PDF como archivo real y se abre en
+  // el navegador (Chrome), que sí sabe mostrarlo/descargarlo/compartirlo.
+  const esNativo = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (esNativo) {
+    const plugins = window.Capacitor.Plugins || {};
+    if (!plugins.Filesystem) {
+      alert('Este APK no tiene el plugin para guardar archivos. Hace falta recompilarlo con la versión más reciente del proyecto.');
       return;
     }
+    let resultado;
+    try {
+      const base64 = await blobABase64(blob);
+      resultado = await plugins.Filesystem.writeFile({ path: nombreArchivo, data: base64, directory: 'CACHE' });
+    } catch (e) {
+      console.error('No se pudo guardar el PDF en el teléfono:', e);
+      alert('No se pudo guardar el PDF en el teléfono. Detalle: ' + (e && e.message ? e.message : JSON.stringify(e)));
+      return;
+    }
+    const src = window.Capacitor.convertFileSrc ? window.Capacitor.convertFileSrc(resultado.uri) : resultado.uri;
+    if (plugins.Browser) {
+      try { await plugins.Browser.open({ url: src }); return; }
+      catch (e) { console.error('No se pudo abrir el navegador:', e); }
+    }
+    if (plugins.Share) {
+      try { await plugins.Share.share({ title: nombreArchivo, url: resultado.uri }); return; }
+      catch (e) { console.error('No se pudo abrir compartir:', e); }
+    }
+    alert('El PDF se guardó, pero no se pudo abrir automáticamente. Ruta: ' + resultado.uri);
+    return;
   }
 
   // 3) Navegador normal (Chrome/Safari en una PC o abriendo el archivo suelto).
@@ -3112,7 +3123,8 @@ async function generarPDFInstalacion(t, cliente) {
 
 /* Botón "PDF" en la lista de Tickets: reconstruye el PDF desde los datos
    ya guardados en el ticket, sin necesitar el checklist abierto. */
-async function descargarPDFTicket(ticketId) {
+async function descargarPDFTicket(ticketId, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
   const t = ticketsBase.find(function (x) { return x.id === ticketId; });
   if (!t || !t.instalacion) { alert('Este ticket no tiene un reporte de instalación guardado.'); return; }
   const cliente = t.clienteId ? clientesBase.find(function (x) { return x.id === t.clienteId; }) : null;

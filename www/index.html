@@ -1419,9 +1419,7 @@ function renderClientes() {
     '</div>'
   ).join('');
 }
-const historialClientes = {
-  1: [ { fecha: '12 sep 2026', texto: 'Pago recibido $350.00' }, { fecha: '05 sep 2026', texto: 'Instalación completada' }, { fecha: '28 ago 2026', texto: 'Soporte (ticket #458)' } ],
-};
+const historialClientes = {};
 function historialDe(c) {
   if (historialClientes[c.id]) return historialClientes[c.id];
   return [{ fecha: '—', texto: 'Sin movimientos registrados todavía (esto se llenará solo en cuanto conectes Mikrowisp).' }];
@@ -3066,8 +3064,10 @@ async function descargarDocPDF(doc, nombreArchivo) {
   if (downloads) { await downloads.save({ filename: nombreArchivo, data: blob }); return; }
 
   // 2) APK de Android (Capacitor): un WebView normal no sabe descargar un
-  // blob generado en JS. Se guarda el PDF como archivo real y se abre en
-  // el navegador (Chrome), que sí sabe mostrarlo/descargarlo/compartirlo.
+  // blob generado en JS. Se guarda el PDF como archivo real y se abre el
+  // selector nativo de "Compartir/Guardar" de Android (WhatsApp, Drive,
+  // Archivos, etc.) — es la única forma que funciona de verdad desde
+  // dentro de la app empaquetada.
   const esNativo = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   if (esNativo) {
     const plugins = window.Capacitor.Plugins || {};
@@ -3084,14 +3084,13 @@ async function descargarDocPDF(doc, nombreArchivo) {
       alert('No se pudo guardar el PDF en el teléfono. Detalle: ' + (e && e.message ? e.message : JSON.stringify(e)));
       return;
     }
-    const src = window.Capacitor.convertFileSrc ? window.Capacitor.convertFileSrc(resultado.uri) : resultado.uri;
-    if (plugins.Browser) {
-      try { await plugins.Browser.open({ url: src }); return; }
-      catch (e) { console.error('No se pudo abrir el navegador:', e); }
-    }
     if (plugins.Share) {
       try { await plugins.Share.share({ title: nombreArchivo, url: resultado.uri }); return; }
-      catch (e) { console.error('No se pudo abrir compartir:', e); }
+      catch (e) { console.error('No se pudo abrir el panel de compartir:', e); }
+    }
+    if (plugins.Browser && window.Capacitor.convertFileSrc) {
+      try { await plugins.Browser.open({ url: window.Capacitor.convertFileSrc(resultado.uri) }); return; }
+      catch (e) { console.error('No se pudo abrir el navegador:', e); }
     }
     alert('El PDF se guardó, pero no se pudo abrir automáticamente. Ruta: ' + resultado.uri);
     return;

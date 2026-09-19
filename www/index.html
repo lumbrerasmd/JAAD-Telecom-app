@@ -294,6 +294,16 @@
   .puerto-row { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 4px 0; }
   .puerto-row .num { width: 26px; color: var(--text-dim); flex: none; }
   .puerto-row select { flex: 1; padding: 7px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-2); color: var(--text); font-family: var(--font); }
+  .emp-fibra-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .emp-fibra-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card-2); font-size: 12px; font-weight: 700; }
+  .emp-fibra-head .nombre { flex: 1; }
+  .emp-fibra-head button { background: rgba(240,69,92,.15); color: var(--red); border: none; border-radius: 6px; padding: 5px 8px; font-size: 11px; }
+  .emp-hilo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 10px; }
+  .emp-hilo { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 3px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-2); font-size: 9px; cursor: pointer; color: var(--text-dim); font-weight: 700; }
+  .emp-hilo .dot { width: 18px; height: 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,.25); }
+  .emp-hilo.selected { outline: 2px dashed var(--accent); }
+  .emp-hilo.usado { opacity: .55; }
+  .emp-hilo.usado .dot { box-shadow: 0 0 0 2px var(--green); }
 
   /* =========================================================================
      VERSIÓN PARA PC — a partir de 900px de ancho, la app deja de ser una
@@ -534,7 +544,9 @@
               <label class="layer-item"><input type="checkbox" data-capa="cliente" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#2ECC71;"></span> Clientes <span class="capa-count" id="count-cliente"></span></label>
               <label class="layer-item"><input type="checkbox" data-capa="crucero" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#F0455C;"></span> Cruceros <span class="capa-count" id="count-crucero"></span></label>
               <label class="layer-item"><input type="checkbox" data-capa="sitio" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#3B7BF0; border-radius:2px;"></span> Sitios / POP <span class="capa-count" id="count-sitio"></span></label>
-              <label class="layer-item"><input type="checkbox" data-capa="fiber:troncal" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#29C6F6;"></span> Fibra troncal</label>
+              <label class="layer-item"><input type="checkbox" data-capa="fiber:troncal12" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#E91E8C;"></span> Fibra troncal 12H</label>
+              <label class="layer-item"><input type="checkbox" data-capa="fiber:troncal" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#29C6F6;"></span> Fibra troncal 48H</label>
+              <label class="layer-item"><input type="checkbox" data-capa="fiber:troncal96" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#6A1B9A;"></span> Fibra troncal 96H</label>
               <label class="layer-item"><input type="checkbox" data-capa="fiber:distribucion" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#3B7BF0;"></span> Fibra distribución</label>
               <label class="layer-item"><input type="checkbox" data-capa="fiber:acometida" onchange="toggleCapaMapa(this)"><span class="dot-legend" style="background:#8B5CF6;"></span> Fibra acometida</label>
             </div>
@@ -917,8 +929,15 @@
         <input class="field" id="em-nombre">
         <label class="field-label">Colonia (opcional)</label>
         <input class="field" id="em-colonia">
+        <div id="em-estado-poste" style="display:none;">
+          <label class="field-label">Tipo de poste</label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;" id="em-estado-poste-chips"></div>
+        </div>
         <div class="el-modal-info" id="em-info" style="display:none;"></div>
         <div id="em-puertos" style="display:none;"></div>
+        <div id="em-caja-empalmes" style="display:none; margin-top:10px;">
+          <button class="btn-secondary" style="width:100%;" onclick="abrirEditorEmpalmes()">🔧 Editar hilos y empalmes</button>
+        </div>
       </div>
       <div id="el-modal-foot">
         <button class="btn-secondary" id="em-eliminar-btn" onclick="eliminarElementoModal()">Eliminar</button>
@@ -926,6 +945,45 @@
       </div>
     </div>
   </div>
+</div>
+
+<div id="empalme-modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; z-index:3200; overflow-y:auto;">
+  <div style="max-width:480px; margin:0 auto; min-height:100%; background:var(--bg);">
+    <div style="position:sticky; top:0; background:var(--card); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); z-index:2;">
+      <h3 style="margin:0; font-size:15px;" id="empalme-title">Hilos y empalmes</h3>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button onclick="abrirCharolaView()" style="background:none; border:none; color:var(--accent); padding:2px 4px; display:flex; align-items:center;" title="Ver charola"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 12h18"/><path d="M8 7V5.5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 5.5V7"/></svg></button>
+        <button onclick="cerrarEditorEmpalmes()" style="background:none; border:none; color:var(--text-dim); font-size:18px;">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px 16px 40px;">
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="btn-secondary" style="flex:1;" onclick="empalmeTogglePicker('fibra')">+ Agregar fibra</button>
+        <button class="btn-secondary" style="flex:1;" onclick="empalmeTogglePicker('splitter')">+ Agregar splitter</button>
+      </div>
+      <button class="btn-secondary" id="empalme-pase-directo-btn" style="width:100%; margin-bottom:8px; color:var(--accent); border-color:var(--accent);" onclick="empalmePaseDirecto(this)">🔀 Pase directo (Entrada → Salida)</button>
+      <div id="empalme-picker-fibra" style="display:none; margin-bottom:12px;">
+        <div class="el-modal-info" style="margin-bottom:8px;">Tipo de fibra</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;" id="empalme-picker-fibra-tipo"></div>
+        <div class="el-modal-info" style="margin-bottom:8px;">Capacidad (hilos)</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;" id="empalme-picker-fibra-cap"></div>
+      </div>
+      <div id="empalme-picker-splitter" style="display:none; margin-bottom:12px;">
+        <div class="el-modal-info" style="margin-bottom:8px;">Relación del splitter</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;" id="empalme-picker-splitter-ratio"></div>
+      </div>
+      <div id="empalme-fibras-list"></div>
+      <div class="el-modal-info" style="margin-top:14px;">Toca un hilo libre y luego otro (de otra fibra) para empalmarlos. Toca un hilo ya empalmado dos veces para deshacer la conexión.</div>
+    </div>
+  </div>
+</div>
+
+<div id="charola-modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; z-index:3300; overflow:auto;">
+  <div style="position:sticky; top:0; background:var(--card); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); z-index:2;">
+    <h3 style="margin:0; font-size:15px;">Charola de fusión</h3>
+    <button onclick="cerrarCharolaView()" style="background:none; border:none; color:var(--text-dim); font-size:18px;">✕</button>
+  </div>
+  <div id="charola-svg-container" style="padding:14px;"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1428,6 +1486,30 @@ function historialDe(c) {
 let clienteActualId = null;
 let clienteTabActual = 'resumen';
 
+/* ---- Botón "Contactar por WhatsApp" del detalle de cliente ---- */
+function abrirWhatsAppCliente() {
+  const c = clientesBase.find(function (x) { return x.id === clienteActualId; });
+  if (!c) return;
+  abrirWhatsApp(c.telefono, c.nombre);
+}
+async function abrirWhatsApp(telefono, nombre) {
+  if (!telefono || !telefono.trim()) {
+    alert('Este cliente no tiene un teléfono registrado. Agrégalo editando su registro.');
+    return;
+  }
+  let numero = telefono.replace(/\D/g, '');
+  if (numero.length === 10) numero = '52' + numero; // 10 dígitos locales -> México
+  const mensaje = encodeURIComponent('Hola' + (nombre ? ' ' + nombre : '') + ', te escribo de JAAD Telecom.');
+  const url = 'https://wa.me/' + numero + '?text=' + mensaje;
+
+  const esNativo = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (esNativo && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+    try { await window.Capacitor.Plugins.Browser.open({ url: url }); return; }
+    catch (e) { console.error('No se pudo abrir WhatsApp:', e); alert('No se pudo abrir WhatsApp. Detalle: ' + (e && e.message ? e.message : e)); return; }
+  }
+  window.open(url, '_blank');
+}
+
 function verCliente(id) {
   clienteActualId = id;
   clienteTabActual = 'resumen';
@@ -1455,7 +1537,7 @@ function renderClienteDetalle() {
         '<div class="detail-row"><span class="k">Estado de pago</span><span class="v">' + c.pago + '</span></div>' +
         '<div class="detail-row"><span class="k">Dirección</span><span class="v">' + c.direccion + '</span></div>' +
       '</div>' +
-      '<button class="btn-primary" style="background:linear-gradient(140deg,#1FAF54,#25D366); color:#06210F;" onclick="alert(\'Aquí abriríamos WhatsApp con el número del cliente.\')"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 14.5a4 4 0 01-4 4H8.5L4 21.5V7.5a4 4 0 014-4h9a4 4 0 014 4v7z"/></svg> Contactar por WhatsApp</button>' +
+      '<button class="btn-primary" style="background:linear-gradient(140deg,#1FAF54,#25D366); color:#06210F;" onclick="abrirWhatsAppCliente()"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 14.5a4 4 0 01-4 4H8.5L4 21.5V7.5a4 4 0 014-4h9a4 4 0 014 4v7z"/></svg> Contactar por WhatsApp</button>' +
       (ticketInstalacion ? '<button class="btn-primary" style="margin-top:10px;" onclick="descargarPDFTicket(' + ticketInstalacion.id + ', event)"><svg viewBox="0 0 24 24" width=15 height=15 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 2.5h8l5 5v14H6z"/><path d="M14 2.5v5h5"/><path d="M9 13h6M9 17h6"/></svg> Descargar PDF de instalación</button>' : '');
   }
   else if (clienteTabActual === 'servicios') {
@@ -1527,8 +1609,10 @@ const MAPA_TYPE_META = {
   sitio:   { label: 'Sitio/POP',  color: '#3B7BF0' },
 };
 const MAPA_FIBER_META = {
-  troncal:      { label: 'Troncal',      color: '#29C6F6', weight: 5, dash: null },
-  distribucion: { label: 'Distribución', color: '#3B7BF0', weight: 3, dash: null },
+  troncal12:    { label: 'Troncal 12H',  color: '#E91E8C', weight: 3, dash: null },
+  troncal:      { label: 'Troncal 48H',  color: '#29C6F6', weight: 5, dash: null },
+  troncal96:    { label: 'Troncal 96H',  color: '#6A1B9A', weight: 6, dash: null },
+  distribucion: { label: 'Distribución', color: '#3B7BF0', altColor: '#1E4A96', weight: 3, dash: '6,5' },
   acometida:    { label: 'Acometida',    color: '#8B5CF6', weight: 2, dash: '4,4' },
 };
 const MAPA_STORAGE_KEY = 'jaad:elementos';
@@ -1577,8 +1661,25 @@ function initLeafletMapaReal() {
   renderColoniaChips();
 }
 
-function mapaMakeIcon(type) {
-  const c = MAPA_TYPE_META[type].color;
+const POSTE_ESTADOS = {
+  existente:  { label: 'Existente',  color: '#2ECC71' },
+  proyectado: { label: 'Proyectado', color: '#F0455C' },
+  luminaria:  { label: 'Luminaria',  color: '#F5D923' }
+};
+const MAPA_ICON_SVG = {
+  nap: '<svg viewBox="0 0 40 40" width="30" height="30"><rect x="8" y="6" width="24" height="30" rx="3" fill="#E91E63" stroke="#880E4F" stroke-width="1.5"/><rect x="12" y="10" width="16" height="7" rx="1.5" fill="#FFFFFF"/><text x="20" y="15.5" font-family="Arial" font-size="6" font-weight="bold" fill="#880E4F" text-anchor="middle">NAP</text><line x1="12" y1="22" x2="28" y2="22" stroke="#FFFFFF" stroke-width="1.5"/><line x1="12" y1="27" x2="28" y2="27" stroke="#FFFFFF" stroke-width="1.5"/><line x1="12" y1="32" x2="22" y2="32" stroke="#FFFFFF" stroke-width="1.5"/></svg>',
+  caja: '<svg viewBox="0 0 40 40" width="28" height="28"><rect x="6" y="14" width="28" height="12" rx="6" fill="#1565C0" stroke="#0D3B7A" stroke-width="1.5"/><line x1="11" y1="16" x2="11" y2="24" stroke="#FFFFFF" stroke-width="1.5"/><line x1="15" y1="16" x2="15" y2="24" stroke="#FFFFFF" stroke-width="1.5"/><line x1="19" y1="16" x2="19" y2="24" stroke="#FFFFFF" stroke-width="1.5"/><line x1="23" y1="16" x2="23" y2="24" stroke="#FFFFFF" stroke-width="1.5"/><line x1="27" y1="16" x2="27" y2="24" stroke="#FFFFFF" stroke-width="1.5"/></svg>',
+  cliente: '<svg viewBox="0 0 40 40" width="26" height="26"><rect x="6" y="20" width="28" height="12" rx="3" fill="#2ECC71" stroke="#1B7A44" stroke-width="1.5"/><circle cx="12" cy="26" r="1.6" fill="#FFFFFF"/><circle cx="17" cy="26" r="1.6" fill="#FFFFFF"/><path d="M 20 17 Q 20 12 25 10" fill="none" stroke="#1B7A44" stroke-width="1.5" stroke-linecap="round"/><path d="M 14 14 A 9 9 0 0 1 26 14" fill="none" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round"/><path d="M 17 17.5 A 5 5 0 0 1 23 17.5" fill="none" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round"/><circle cx="20" cy="20" r="1.6" fill="#2ECC71"/></svg>'
+};
+function mapaMakeIcon(el) {
+  const type = el.type;
+  let c = MAPA_TYPE_META[type].color;
+  if (type === 'poste') c = (POSTE_ESTADOS[el.estado] || POSTE_ESTADOS.existente).color;
+  if (MAPA_ICON_SVG[type]) {
+    const size = type === 'nap' ? 30 : (type === 'caja' ? 28 : 26);
+    return L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+      html: '<div style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.5));">' + MAPA_ICON_SVG[type] + '</div>' });
+  }
   if (type === 'sitio') {
     return L.divIcon({ className: '', iconSize: [20, 20], iconAnchor: [10, 10],
       html: '<div style="width:20px;height:20px;border-radius:4px;background:' + c + ';border:2.5px solid #F2F6FF;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>' });
@@ -1601,7 +1702,7 @@ function mapaRecargarEnMapa() {
   if (!window._leafletMap) return;
   Object.values(mapaMarkers).forEach(function (m) { window._leafletMap.removeLayer(m); });
   mapaMarkers = {};
-  Object.values(mapaFiberLayers).forEach(function (m) { window._leafletMap.removeLayer(m); });
+  Object.values(mapaFiberLayers).forEach(function (arr) { arr.forEach(function (m) { window._leafletMap.removeLayer(m); }); });
   mapaFiberLayers = {};
   mapaElements.forEach(mapaAddMarker);
   mapaFiberLines.forEach(mapaAddFiberLine);
@@ -1628,7 +1729,7 @@ function mapaPopupHtml(el) {
 }
 
 function mapaAddMarker(el) {
-  const marker = L.marker([el.lat, el.lng], { icon: mapaMakeIcon(el.type), draggable: mapaEdicionDesbloqueada });
+  const marker = L.marker([el.lat, el.lng], { icon: mapaMakeIcon(el), draggable: mapaEdicionDesbloqueada });
   marker.bindPopup(mapaPopupHtml(el));
   marker.on('popupopen', function () {
     const del = document.querySelector('.popup-del[data-id="' + el.id + '"]');
@@ -1707,19 +1808,39 @@ function mapaFiberPopupHtml(fl) {
     '<div class="popup-actions"><span class="popup-del" data-fid="' + fl.id + '">Eliminar</span></div>';
 }
 
-function mapaAddFiberLine(fl) {
+/* Construye 1..N capas Leaflet para una fibra. Para 'distribucion' con más
+   de 2 puntos, dibuja un tramo por cada par de puntos consecutivos
+   alternando color (meta.color / meta.altColor) para simular el cambio
+   de color cada cierto tramo del carrete. Los demás tipos regresan una
+   sola capa, como antes. */
+function mapaBuildFiberLayers(fl) {
   const meta = MAPA_FIBER_META[fl.tipo];
-  const poly = L.polyline(fl.coords, { color: meta.color, weight: meta.weight, dashArray: meta.dash });
-  poly.bindPopup(mapaFiberPopupHtml(fl));
-  poly.on('popupopen', function () {
-    const del = document.querySelector('.popup-del[data-fid="' + fl.id + '"]');
-    if (del) del.onclick = function () { mapaEliminarFibra(fl.id); };
+  if (fl.tipo === 'distribucion' && meta.altColor && fl.coords.length > 2) {
+    const layers = [];
+    for (let i = 0; i < fl.coords.length - 1; i++) {
+      const color = i % 2 === 0 ? meta.color : meta.altColor;
+      layers.push(L.polyline([fl.coords[i], fl.coords[i + 1]], { color: color, weight: meta.weight, dashArray: meta.dash }));
+    }
+    return layers;
+  }
+  return [L.polyline(fl.coords, { color: meta.color, weight: meta.weight, dashArray: meta.dash })];
+}
+
+function mapaAddFiberLine(fl) {
+  const layers = mapaBuildFiberLayers(fl);
+  const html = mapaFiberPopupHtml(fl);
+  layers.forEach(function (poly) {
+    poly.bindPopup(html);
+    poly.on('popupopen', function () {
+      const del = document.querySelector('.popup-del[data-fid="' + fl.id + '"]');
+      if (del) del.onclick = function () { mapaEliminarFibra(fl.id); };
+    });
+    if (mapaCapaVisible('fiber:' + fl.tipo)) poly.addTo(window._leafletMap);
   });
-  if (mapaCapaVisible('fiber:' + fl.tipo)) poly.addTo(window._leafletMap);
-  mapaFiberLayers[fl.id] = poly;
+  mapaFiberLayers[fl.id] = layers;
 }
 function mapaEliminarFibra(id) {
-  if (mapaFiberLayers[id]) { window._leafletMap.removeLayer(mapaFiberLayers[id]); delete mapaFiberLayers[id]; }
+  if (mapaFiberLayers[id]) { mapaFiberLayers[id].forEach(function (l) { window._leafletMap.removeLayer(l); }); delete mapaFiberLayers[id]; }
   mapaFiberLines = mapaFiberLines.filter(function (f) { return f.id !== id; });
   mapaPersistirFibras();
 }
@@ -1731,8 +1852,10 @@ function toggleCapaMapa(checkbox) {
   if (key.indexOf('fiber:') === 0) {
     const tipo = key.split(':')[1];
     mapaFiberLines.filter(function (f) { return f.tipo === tipo; }).forEach(function (f) {
-      const m = mapaFiberLayers[f.id]; if (!m) return;
-      if (visible) { if (!window._leafletMap.hasLayer(m)) m.addTo(window._leafletMap); } else { window._leafletMap.removeLayer(m); }
+      const layers = mapaFiberLayers[f.id]; if (!layers) return;
+      layers.forEach(function (m) {
+        if (visible) { if (!window._leafletMap.hasLayer(m)) m.addTo(window._leafletMap); } else { window._leafletMap.removeLayer(m); }
+      });
     });
   } else {
     mapaElements.filter(function (e) { return e.type === key; }).forEach(function (e) {
@@ -1747,7 +1870,7 @@ function toggleCapaMapa(checkbox) {
    (postes, cajas, clientes, cruceros, sitios y fibra), que es el "plano
    completo" de construcción. Por defecto queda apagado para que la vista
    normal de los instaladores solo tenga NAPs. */
-const CAPAS_PLANO_COMPLETO = ['poste', 'caja', 'cliente', 'crucero', 'sitio', 'fiber:troncal', 'fiber:distribucion', 'fiber:acometida'];
+const CAPAS_PLANO_COMPLETO = ['poste', 'caja', 'cliente', 'crucero', 'sitio', 'fiber:troncal12', 'fiber:troncal', 'fiber:troncal96', 'fiber:distribucion', 'fiber:acometida'];
 function togglePlanoCompleto(mostrar) {
   CAPAS_PLANO_COMPLETO.forEach(function (key) {
     const cb = document.querySelector('.layer-item input[data-capa="' + key + '"]');
@@ -1870,7 +1993,7 @@ function aplicarFiltroColonia() {
       window._leafletMap.removeLayer(m);
     }
   });
-  Object.values(mapaFiberLayers).forEach(function (m) { if (window._leafletMap.hasLayer(m)) window._leafletMap.removeLayer(m); });
+  Object.values(mapaFiberLayers).forEach(function (arr) { arr.forEach(function (m) { if (window._leafletMap.hasLayer(m)) window._leafletMap.removeLayer(m); }); });
   if (puntos.length === 1) window._leafletMap.setView(puntos[0], 18);
   else if (puntos.length > 1) window._leafletMap.fitBounds(L.latLngBounds(puntos), { padding: [30, 30] });
 }
@@ -1887,19 +2010,53 @@ function abrirModalElemento(el, onSave, onDelete) {
   document.getElementById('em-colonia').value = el.colonia || '';
   const info = document.getElementById('em-info');
   const puertosCont = document.getElementById('em-puertos');
+  const estadoPosteCont = document.getElementById('em-estado-poste');
+  const cajaEmpalmesCont = document.getElementById('em-caja-empalmes');
+  estadoPosteCont.style.display = 'none';
+  cajaEmpalmesCont.style.display = 'none';
+  if (el.type === 'poste') {
+    estadoPosteCont.style.display = 'block';
+    renderEstadoPosteChips(el);
+  }
   if (el.type === 'nap' && el.puertos) {
     info.style.display = 'block';
     puertosCont.style.display = 'block';
     renderPuertosEditor(el);
-  } else if (el.type === 'caja' && el.fibras) {
+    if (!el.fibras) el.fibras = [];
+    if (!el.splitters) el.splitters = [];
+    cajaEmpalmesCont.style.display = 'block';
+  } else if (el.type === 'caja') {
+    if (!el.fibras) el.fibras = [];
+    if (!el.splitters) el.splitters = [];
     info.style.display = 'block';
     puertosCont.style.display = 'none';
-    info.textContent = el.fibras.length + ' fibra(s) instalada(s) en esta caja.';
+    const totalHilos = el.fibras.reduce(function (s, f) { return s + f.hilos.length; }, 0);
+    const usados = el.fibras.reduce(function (s, f) { return s + f.hilos.filter(function (h) { return h.estado !== 'libre'; }).length; }, 0);
+    info.textContent = el.fibras.length + ' fibra(s) · ' + usados + '/' + totalHilos + ' hilos usados';
+    cajaEmpalmesCont.style.display = 'block';
   } else {
     info.style.display = 'none';
     puertosCont.style.display = 'none';
   }
   document.getElementById('el-modal-overlay').classList.add('open');
+}
+function renderEstadoPosteChips(el) {
+  const cont = document.getElementById('em-estado-poste-chips');
+  cont.innerHTML = '';
+  Object.keys(POSTE_ESTADOS).forEach(function (key) {
+    const meta = POSTE_ESTADOS[key];
+    const chip = document.createElement('div');
+    chip.className = 'map-add-chip' + ((el.estado || 'existente') === key ? ' active' : '');
+    chip.innerHTML = '<span class="dot" style="background:' + meta.color + '"></span> ' + meta.label;
+    chip.onclick = function () {
+      el.estado = key;
+      renderEstadoPosteChips(el);
+      const m = (proyMarkers && proyMarkers[el.id]) || (mapaMarkers && mapaMarkers[el.id]);
+      if (m) m.setIcon(mapaMakeIcon(el));
+      if (mapaModalOnSave) mapaModalOnSave(el);
+    };
+    cont.appendChild(chip);
+  });
 }
 function renderPuertosEditor(el) {
   const usados = el.puertos.filter(function (p) { return p.ocupado; }).length;
@@ -1929,6 +2086,677 @@ function actualizarPuertoNap(idx, valorCliente) {
   renderPuertosEditor(mapaModalTarget);
   if (mapaModalOnSave) mapaModalOnSave(mapaModalTarget);
 }
+/* ---- Editor de hilos y empalmes dentro de una caja de empalme ----
+   Opera directamente sobre el mismo modelo de datos que ya existe
+   (el.fibras[].hilos[].estado / .empalmeCon), así que reutiliza el
+   mismo mapaModalOnSave del modal padre para persistir. */
+const COLORS_HILO = [
+  { n: 'Azul', h: '#2979FF' }, { n: 'Naranja', h: '#FF9100' }, { n: 'Verde', h: '#00C853' },
+  { n: 'Café', h: '#8D6E63' }, { n: 'Gris', h: '#9E9E9E' }, { n: 'Blanco', h: '#FAFAFA' },
+  { n: 'Rojo', h: '#FF1744' }, { n: 'Negro', h: '#424242' }, { n: 'Amarillo', h: '#FFEA00' },
+  { n: 'Violeta', h: '#AA00FF' }, { n: 'Rosa', h: '#FF4081' }, { n: 'Aqua', h: '#00E5FF' }
+];
+let empalmeCajaActual = null;
+let empalmeSeleccion = null; // { fibraId, hiloIdx }
+let empalmePendingRemove = null; // ref pendiente de doble-toque para desconectar
+let empalmeCollapsed = {}; // { [fibraId|splitterId]: true } — persiste entre renders
+let empalmeContSel = []; // ids de fibra seleccionados para "dar continuidad"
+
+function abrirEditorEmpalmes() {
+  if (!mapaModalTarget || (mapaModalTarget.type !== 'caja' && mapaModalTarget.type !== 'nap')) return;
+  empalmeCajaActual = mapaModalTarget;
+  if (!empalmeCajaActual.splitters) empalmeCajaActual.splitters = [];
+  empalmeSeleccion = null;
+  empalmePendingRemove = null;
+  empalmeCollapsed = {};
+  empalmeContSel = [];
+  document.getElementById('empalme-title').textContent = 'Hilos y empalmes · ' + empalmeCajaActual.nombre;
+  renderEmpalmeFibras();
+  document.getElementById('empalme-modal-overlay').style.display = 'block';
+}
+function cerrarEditorEmpalmes() {
+  document.getElementById('empalme-modal-overlay').style.display = 'none';
+  if (empalmeCajaActual) {
+    empalmeRefrescarInfoPadre();
+    if (mapaModalOnSave) mapaModalOnSave(empalmeCajaActual);
+  }
+  empalmeCajaActual = null;
+}
+function empalmeRefrescarInfoPadre() {
+  const el = empalmeCajaActual;
+  const totalHilos = el.fibras.reduce(function (s, f) { return s + f.hilos.length; }, 0);
+  const usados = el.fibras.reduce(function (s, f) { return s + f.hilos.filter(function (h) { return h.estado !== 'libre'; }).length; }, 0);
+  const info = document.getElementById('em-info');
+  if (info) info.textContent = el.fibras.length + ' fibra(s)' + (el.splitters && el.splitters.length ? ' · ' + el.splitters.length + ' splitter(s)' : '') + ' · ' + usados + '/' + totalHilos + ' hilos usados';
+}
+function empalmeAgregarFibra() {
+  const n = empalmeCajaActual.fibras.length + 1;
+  empalmeCajaActual.fibras.push({
+    id: 'f_' + Date.now(),
+    kind: empalmePickTipo || 'dist',
+    nombre: (empalmePickTipoLabel || 'Distribución') + ' ' + n,
+    capacidad: empalmePickCap || 12,
+    hilos: Array.from({ length: empalmePickCap || 12 }, function () { return { estado: 'libre', cliente: '', empalmeCon: null }; })
+  });
+  empalmeCerrarPickers();
+  renderEmpalmeFibras();
+}
+function empalmeEliminarFibra(fibraId, btn) {
+  if (btn && !empalmeConfirmTap(btn)) return;
+  empalmeDesconectarTodoDe('fibra', fibraId);
+  empalmeCajaActual.fibras = empalmeCajaActual.fibras.filter(function (f) { return f.id !== fibraId; });
+  empalmeSeleccion = null;
+  renderEmpalmeFibras();
+}
+function empalmeAgregarSplitter() {
+  const ratio = empalmePickRatio || 8;
+  empalmeCajaActual.splitters.push({
+    id: 'sp_' + Date.now(),
+    ratio: ratio,
+    entrada: { estado: 'libre', empalmeCon: null },
+    salidas: Array.from({ length: ratio }, function () { return { estado: 'libre', empalmeCon: null }; })
+  });
+  empalmeCerrarPickers();
+  renderEmpalmeFibras();
+}
+function empalmeEliminarSplitter(splitterId, btn) {
+  if (btn && !empalmeConfirmTap(btn)) return;
+  empalmeDesconectarTodoDe('splitter', splitterId);
+  empalmeCajaActual.splitters = empalmeCajaActual.splitters.filter(function (s) { return s.id !== splitterId; });
+  empalmeSeleccion = null;
+  renderEmpalmeFibras();
+}
+/* ---- Confirmación de dos toques (sin usar confirm(), que no
+   funciona en algunos navegadores/WebViews móviles) ---- */
+function empalmeConfirmTap(btn) {
+  if (btn.dataset.confirming === '1') { return true; }
+  btn.dataset.confirming = '1';
+  const original = btn.textContent;
+  btn.textContent = '¿Seguro?';
+  btn.style.background = 'rgba(240,69,92,.35)';
+  setTimeout(function () {
+    if (btn && btn.dataset.confirming === '1') { btn.dataset.confirming = ''; btn.textContent = original; btn.style.background = ''; }
+  }, 2500);
+  return false;
+}
+/* ---- Selectores de tipo/capacidad/relación (chips, no prompt()) ---- */
+let empalmePickTipo = 'dist';
+let empalmePickTipoLabel = 'Distribución';
+let empalmePickCap = 12;
+let empalmePickRatio = 8;
+const EMPALME_TIPOS_FIBRA = [
+  { key: 'entrada', label: 'Entrada troncal', caps: [12, 24, 48, 96], def: 48 },
+  { key: 'salida', label: 'Salida troncal', caps: [12, 24, 48, 96], def: 48 },
+  { key: 'dist', label: 'Distribución', caps: [6, 12, 24], def: 12 },
+  { key: 'clientes', label: 'Puertos cliente', caps: [4, 8, 16, 32], def: 8 }
+];
+function empalmeTogglePicker(which) {
+  const fibraPicker = document.getElementById('empalme-picker-fibra');
+  const spPicker = document.getElementById('empalme-picker-splitter');
+  if (which === 'fibra') {
+    const open = fibraPicker.style.display !== 'none';
+    fibraPicker.style.display = open ? 'none' : 'block';
+    spPicker.style.display = 'none';
+    if (!open) { empalmeRenderTipoChips(); empalmeRenderCapChips(EMPALME_TIPOS_FIBRA[2].caps, EMPALME_TIPOS_FIBRA[2].def); }
+  } else {
+    const open = spPicker.style.display !== 'none';
+    spPicker.style.display = open ? 'none' : 'block';
+    fibraPicker.style.display = 'none';
+    if (!open) empalmeRenderRatioChips();
+  }
+}
+function empalmeCerrarPickers() {
+  document.getElementById('empalme-picker-fibra').style.display = 'none';
+  document.getElementById('empalme-picker-splitter').style.display = 'none';
+}
+function empalmeRenderTipoChips() {
+  const cont = document.getElementById('empalme-picker-fibra-tipo');
+  cont.innerHTML = '';
+  EMPALME_TIPOS_FIBRA.forEach(function (t) {
+    const chip = document.createElement('div');
+    chip.className = 'map-add-chip' + (empalmePickTipo === t.key ? ' active' : '');
+    chip.textContent = t.label;
+    chip.onclick = function () {
+      empalmePickTipo = t.key; empalmePickTipoLabel = t.label; empalmePickCap = t.def;
+      empalmeRenderTipoChips();
+      empalmeRenderCapChips(t.caps, t.def);
+    };
+    cont.appendChild(chip);
+  });
+}
+function empalmeRenderCapChips(caps, def) {
+  if (empalmePickCap === undefined || caps.indexOf(empalmePickCap) === -1) empalmePickCap = def;
+  const cont = document.getElementById('empalme-picker-fibra-cap');
+  cont.innerHTML = '';
+  caps.forEach(function (c) {
+    const chip = document.createElement('div');
+    chip.className = 'map-add-chip' + (empalmePickCap === c ? ' active' : '');
+    chip.textContent = c + 'H';
+    chip.onclick = function () { empalmePickCap = c; empalmeRenderCapChips(caps, def); };
+    cont.appendChild(chip);
+  });
+  let btn = document.getElementById('empalme-picker-fibra-confirm');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'empalme-picker-fibra-confirm';
+    btn.className = 'btn-primary';
+    btn.style.cssText = 'width:100%; margin-top:10px;';
+    btn.textContent = 'Agregar';
+    btn.onclick = empalmeAgregarFibra;
+    cont.parentElement.appendChild(btn);
+  }
+}
+function empalmeRenderRatioChips() {
+  const cont = document.getElementById('empalme-picker-splitter-ratio');
+  cont.innerHTML = '';
+  [2, 4, 8, 16, 32].forEach(function (r) {
+    const chip = document.createElement('div');
+    chip.className = 'map-add-chip' + (empalmePickRatio === r ? ' active' : '');
+    chip.textContent = '1:' + r;
+    chip.onclick = function () { empalmePickRatio = r; empalmeRenderRatioChips(); };
+    cont.appendChild(chip);
+  });
+  let btn = document.getElementById('empalme-picker-splitter-confirm');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'empalme-picker-splitter-confirm';
+    btn.className = 'btn-primary';
+    btn.style.cssText = 'width:100%; margin-top:10px;';
+    btn.textContent = 'Agregar';
+    btn.onclick = empalmeAgregarSplitter;
+    cont.parentElement.appendChild(btn);
+  }
+}
+/* ---- Referencia genérica a un puerto: hilo de fibra o entrada/salida de splitter ----
+   ref = { kind:'fibra', fibraId, hiloIdx } | { kind:'splitter', splitterId, port:'IN'|number } */
+function empalmeGetPuerto(ref) {
+  if (ref.kind === 'fibra') {
+    const f = empalmeCajaActual.fibras.find(function (x) { return x.id === ref.fibraId; });
+    return f ? f.hilos[ref.hiloIdx] : null;
+  }
+  const sp = empalmeCajaActual.splitters.find(function (x) { return x.id === ref.splitterId; });
+  if (!sp) return null;
+  return ref.port === 'IN' ? sp.entrada : sp.salidas[ref.port];
+}
+function empalmeMismaRef(a, b) {
+  if (!a || !b || a.kind !== b.kind) return false;
+  if (a.kind === 'fibra') return a.fibraId === b.fibraId && a.hiloIdx === b.hiloIdx;
+  return a.splitterId === b.splitterId && a.port === b.port;
+}
+function empalmeDesconectarTodoDe(kind, id) {
+  empalmeCajaActual.fibras.forEach(function (f) {
+    f.hilos.forEach(function (h) {
+      if (h.empalmeCon && h.empalmeCon.kind === kind && (kind === 'fibra' ? h.empalmeCon.fibraId : h.empalmeCon.splitterId) === id) { h.estado = 'libre'; h.empalmeCon = null; }
+    });
+  });
+  empalmeCajaActual.splitters.forEach(function (sp) {
+    [sp.entrada].concat(sp.salidas).forEach(function (p) {
+      if (p.empalmeCon && p.empalmeCon.kind === kind && (kind === 'fibra' ? p.empalmeCon.fibraId : p.empalmeCon.splitterId) === id) { p.estado = 'libre'; p.empalmeCon = null; }
+    });
+  });
+}
+function empalmeClickPuerto(ref) {
+  const puerto = empalmeGetPuerto(ref);
+  if (!puerto) return;
+  if (puerto.estado === 'empalme') {
+    if (!empalmeMismaRef(empalmePendingRemove, ref)) {
+      empalmePendingRemove = ref; renderEmpalmeFibras();
+      setTimeout(function () { if (empalmeMismaRef(empalmePendingRemove, ref)) { empalmePendingRemove = null; renderEmpalmeFibras(); } }, 2500);
+      return;
+    }
+    empalmePendingRemove = null;
+    const otro = puerto.empalmeCon;
+    puerto.estado = 'libre'; puerto.empalmeCon = null;
+    if (otro) { const p2 = empalmeGetPuerto(otro); if (p2) { p2.estado = 'libre'; p2.empalmeCon = null; } }
+    empalmeSeleccion = null;
+    renderEmpalmeFibras();
+    return;
+  }
+  if (!empalmeSeleccion) { empalmeSeleccion = ref; renderEmpalmeFibras(); return; }
+  if (empalmeMismaRef(empalmeSeleccion, ref)) { empalmeSeleccion = null; renderEmpalmeFibras(); return; }
+  const p1 = empalmeGetPuerto(empalmeSeleccion);
+  p1.estado = 'empalme'; p1.empalmeCon = ref;
+  puerto.estado = 'empalme'; puerto.empalmeCon = empalmeSeleccion;
+  empalmeSeleccion = null;
+  renderEmpalmeFibras();
+}
+function empalmeChip(ref, label, colorHex) {
+  const puerto = empalmeGetPuerto(ref);
+  const isSel = empalmeMismaRef(empalmeSeleccion, ref);
+  const isPendingRemove = empalmeMismaRef(empalmePendingRemove, ref);
+  const chip = document.createElement('div');
+  chip.className = 'emp-hilo' + (puerto.estado === 'empalme' ? ' usado' : '') + (isSel ? ' selected' : '') + (isPendingRemove ? ' selected' : '');
+  if (isPendingRemove) {
+    chip.style.background = 'rgba(240,69,92,.3)';
+    chip.innerHTML = '¿Quitar?<span class="dot" style="background:' + colorHex + '"></span>';
+  } else {
+    chip.innerHTML = label + '<span class="dot" style="background:' + colorHex + '"></span>';
+  }
+  chip.onclick = function () { empalmeClickPuerto(ref); };
+  return chip;
+}
+function empalmeAddCollapseToggle(head, body, id) {
+  const toggle = document.createElement('button');
+  const startsCollapsed = !!empalmeCollapsed[id];
+  toggle.textContent = startsCollapsed ? '▸' : '▾';
+  body.style.display = startsCollapsed ? 'none' : '';
+  toggle.style.cssText = 'background:none; border:none; color:var(--text-dim); font-size:14px; padding:0 4px;';
+  toggle.onclick = function (e) {
+    e.stopPropagation();
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? '' : 'none';
+    toggle.textContent = hidden ? '▾' : '▸';
+    empalmeCollapsed[id] = !hidden;
+  };
+  head.appendChild(toggle);
+}
+function renderEmpalmeFibras() {
+  const overlay = document.getElementById('empalme-modal-overlay');
+  const prevScroll = overlay ? overlay.scrollTop : 0;
+  const cont = document.getElementById('empalme-fibras-list');
+  cont.innerHTML = '';
+  if (empalmeCajaActual.fibras.length === 0 && empalmeCajaActual.splitters.length === 0) {
+    cont.innerHTML = '<div class="el-modal-info">Sin fibras ni splitters todavía.</div>';
+    return;
+  }
+  empalmeCajaActual.fibras.forEach(function (fibra) {
+    const card = document.createElement('div');
+    card.className = 'emp-fibra-card';
+    const head = document.createElement('div');
+    head.className = 'emp-fibra-head';
+    const nombreSpan = document.createElement('span');
+    nombreSpan.className = 'nombre';
+    nombreSpan.textContent = fibra.nombre + ' · ' + fibra.capacidad + 'H';
+    nombreSpan.style.cursor = 'pointer';
+    if (empalmeContSel.indexOf('fibra:' + fibra.id) !== -1) { nombreSpan.style.color = 'var(--accent)'; nombreSpan.textContent += ' ✓'; }
+    nombreSpan.onclick = function (e) { e.stopPropagation(); empalmeToggleContSel('fibra:' + fibra.id); };
+    head.appendChild(nombreSpan);
+    const body = document.createElement('div');
+    empalmeAddCollapseToggle(head, body, fibra.id);
+    const rm = document.createElement('button');
+    rm.textContent = '🗑';
+    rm.onclick = function () { empalmeEliminarFibra(fibra.id, rm); };
+    head.appendChild(rm);
+    card.appendChild(head);
+    body.appendChild(empalmeFibraIcon(fibra.capacidad));
+    const grid = document.createElement('div');
+    grid.className = 'emp-hilo-grid';
+    fibra.hilos.forEach(function (hilo, idx) {
+      const c = COLORS_HILO[idx % 12];
+      grid.appendChild(empalmeChip({ kind: 'fibra', fibraId: fibra.id, hiloIdx: idx }, 'H' + (idx + 1), c.h));
+    });
+    body.appendChild(grid);
+    card.appendChild(body);
+    cont.appendChild(card);
+  });
+  empalmeCajaActual.splitters.forEach(function (sp) {
+    const card = document.createElement('div');
+    card.className = 'emp-fibra-card';
+    const head = document.createElement('div');
+    head.className = 'emp-fibra-head';
+    const nombreSpan = document.createElement('span');
+    nombreSpan.className = 'nombre';
+    nombreSpan.textContent = 'Splitter 1:' + sp.ratio + ' (salidas)';
+    nombreSpan.style.cursor = 'pointer';
+    if (empalmeContSel.indexOf('splitter:' + sp.id) !== -1) { nombreSpan.style.color = 'var(--accent)'; nombreSpan.textContent += ' ✓'; }
+    nombreSpan.onclick = function (e) { e.stopPropagation(); empalmeToggleContSel('splitter:' + sp.id); };
+    head.appendChild(nombreSpan);
+    const body = document.createElement('div');
+    empalmeAddCollapseToggle(head, body, sp.id);
+    const rm = document.createElement('button');
+    rm.textContent = '🗑';
+    rm.onclick = function () { empalmeEliminarSplitter(sp.id, rm); };
+    head.appendChild(rm);
+    card.appendChild(head);
+    body.appendChild(empalmeSplitterIcon(sp.ratio));
+    const inGrid = document.createElement('div');
+    inGrid.className = 'emp-hilo-grid';
+    inGrid.style.gridTemplateColumns = '1fr';
+    const inChip = empalmeChip({ kind: 'splitter', splitterId: sp.id, port: 'IN' }, 'ENTRADA', '#FFC107');
+    inChip.style.background = 'rgba(255,193,7,.12)';
+    inChip.style.borderColor = 'rgba(255,193,7,.5)';
+    inGrid.appendChild(inChip);
+    body.appendChild(inGrid);
+    const div = document.createElement('div');
+    div.style.cssText = 'font-size:9px;color:var(--text-dim);text-align:center;padding:6px 0 0;text-transform:uppercase;letter-spacing:.05em;font-weight:700;';
+    div.textContent = 'Salidas × ' + sp.ratio;
+    body.appendChild(div);
+    const outGrid = document.createElement('div');
+    outGrid.className = 'emp-hilo-grid';
+    sp.salidas.forEach(function (salida, idx) {
+      const c = COLORS_HILO[idx % 12];
+      outGrid.appendChild(empalmeChip({ kind: 'splitter', splitterId: sp.id, port: idx }, 'O' + (idx + 1), c.h));
+    });
+    body.appendChild(outGrid);
+    card.appendChild(body);
+    cont.appendChild(card);
+  });
+  empalmeRenderContSelBar();
+  if (overlay) requestAnimationFrame(function () { overlay.scrollTop = prevScroll; });
+}
+function empalmeToggleContSel(key) {
+  const idx = empalmeContSel.indexOf(key);
+  if (idx !== -1) { empalmeContSel.splice(idx, 1); }
+  else {
+    empalmeContSel.push(key);
+    if (empalmeContSel.length > 2) empalmeContSel.shift();
+  }
+  renderEmpalmeFibras();
+}
+/* Resuelve una clave 'fibra:id' o 'splitter:id' a { label, puertos, refFor(idx) } —
+   puertos es el arreglo de hilos/salidas a recorrer, refFor arma la referencia
+   empalmeCon correcta para cada índice según el tipo. */
+function empalmeResolveContSel(key) {
+  const parts = key.split(':');
+  const tipo = parts[0], id = parts.slice(1).join(':');
+  if (tipo === 'fibra') {
+    const f = empalmeCajaActual.fibras.find(function (x) { return x.id === id; });
+    if (!f) return null;
+    return { label: f.nombre, puertos: f.hilos, refFor: function (idx) { return { kind: 'fibra', fibraId: f.id, hiloIdx: idx }; } };
+  }
+  const sp = empalmeCajaActual.splitters.find(function (x) { return x.id === id; });
+  if (!sp) return null;
+  return { label: 'Splitter 1:' + sp.ratio, puertos: sp.salidas, refFor: function (idx) { return { kind: 'splitter', splitterId: sp.id, port: idx }; } };
+}
+function empalmeRenderContSelBar() {
+  let bar = document.getElementById('empalme-cont-bar');
+  if (bar) bar.remove();
+  if (empalmeContSel.length !== 2) return;
+  const a = empalmeResolveContSel(empalmeContSel[0]);
+  const b = empalmeResolveContSel(empalmeContSel[1]);
+  if (!a || !b) return;
+  bar = document.createElement('button');
+  bar.id = 'empalme-cont-bar';
+  bar.className = 'btn-primary';
+  bar.style.cssText = 'width:100%; margin-bottom:10px;';
+  bar.textContent = '🔗 Dar continuidad: ' + a.label + ' ↔ ' + b.label;
+  bar.onclick = function () { empalmeDarContinuidad(empalmeContSel[0], empalmeContSel[1], bar); };
+  const cont = document.getElementById('empalme-fibras-list');
+  cont.parentElement.insertBefore(bar, cont);
+}
+function empalmeDarContinuidad(keyA, keyB, btn) {
+  const a = empalmeResolveContSel(keyA);
+  const b = empalmeResolveContSel(keyB);
+  if (!a || !b) return;
+  const n = Math.min(a.puertos.length, b.puertos.length);
+  let hechos = 0;
+  for (let i = 0; i < n; i++) {
+    const pA = a.puertos[i];
+    const pB = b.puertos[i];
+    if (pA.estado !== 'libre' || pB.estado !== 'libre') continue;
+    pA.estado = 'empalme'; pA.empalmeCon = b.refFor(i);
+    pB.estado = 'empalme'; pB.empalmeCon = a.refFor(i);
+    hechos++;
+  }
+  if (btn) btn.textContent = hechos > 0 ? ('✓ ' + hechos + ' hilo(s) conectados') : 'No había hilos libres en ambas';
+  setTimeout(function () { empalmeContSel = []; renderEmpalmeFibras(); }, 1300);
+}
+function empalmeFibraIcon(cap) {
+  const H = Math.max(40, Math.min(130, 8 * cap));
+  const W = 280;
+  const margin = Math.min(16, H * 0.18);
+  let lines = '<rect x="3" y="3" width="' + (W - 6) + '" height="' + (H - 6) + '" rx="10" fill="rgba(255,255,255,.03)" stroke="rgba(143,166,201,.35)" stroke-width="1.5"/>';
+  for (let i = 0; i < cap; i++) {
+    const y = cap === 1 ? H / 2 : margin + i * ((H - 2 * margin) / (cap - 1));
+    const c = COLORS_HILO[i % 12];
+    lines += '<line x1="14" y1="' + y + '" x2="' + (W - 14) + '" y2="' + y + '" stroke="' + c.h + '" stroke-width="2.4" stroke-linecap="round"/>';
+  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;padding:8px 6px 2px;box-sizing:border-box;">' + lines + '</svg>';
+  return wrap;
+}
+function empalmeSplitterIcon(ratio) {
+  const H = Math.max(46, Math.min(140, 14 * ratio));
+  const W = 260;
+  const midY = H / 2;
+  let paths = '<path d="M 0 ' + midY + ' L ' + (W * 0.22) + ' ' + midY + '" stroke="#FFC107" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  paths += '<rect x="' + (W * 0.22) + '" y="' + (midY - 9) + '" width="' + (W * 0.1) + '" height="18" rx="4" fill="#8E24AA"/>';
+  const margin = Math.min(18, H * 0.12);
+  for (let i = 0; i < ratio; i++) {
+    const yOut = ratio === 1 ? midY : margin + i * ((H - 2 * margin) / (ratio - 1));
+    const c = COLORS_HILO[i % 12];
+    const startX = W * 0.32, endX = W * 0.98, dx = (endX - startX) * 0.5;
+    paths += '<path d="M ' + startX + ' ' + midY + ' C ' + (startX + dx) + ' ' + midY + ', ' + (endX - dx) + ' ' + yOut + ', ' + endX + ' ' + yOut + '" stroke="' + c.h + '" stroke-width="2" fill="none" opacity="0.9"/>';
+    paths += '<circle cx="' + endX + '" cy="' + yOut + '" r="3" fill="' + c.h + '"/>';
+  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;padding:8px 6px 2px;box-sizing:border-box;">' + paths + '</svg>';
+  return wrap;
+}
+
+/* ---- Vista de charola: dibuja las fibras/splitters de la caja como si
+   estuvieran organizadas físicamente en una charola de fusión, usando
+   las mismas conexiones (empalmeCon) ya guardadas — no agrega datos
+   nuevos, solo los representa de forma más realista. */
+function empalmeInferKind(fibra) {
+  return fibra.kind || (/^Entrada/.test(fibra.nombre) ? 'entrada' : 'dist');
+}
+function empalmePaseDirecto(btn) {
+  const entrada = empalmeCajaActual.fibras.find(function (f) { return empalmeInferKind(f) === 'entrada'; });
+  const salida = empalmeCajaActual.fibras.find(function (f) { return empalmeInferKind(f) === 'salida'; });
+  if (!entrada || !salida) {
+    btn.textContent = 'Necesitas una fibra de Entrada y una de Salida';
+    setTimeout(function () { btn.textContent = '🔀 Pase directo (Entrada → Salida)'; }, 2200);
+    return;
+  }
+  const n = Math.min(entrada.hilos.length, salida.hilos.length);
+  let hechos = 0;
+  for (let i = 0; i < n; i++) {
+    const hE = entrada.hilos[i];
+    const hS = salida.hilos[i];
+    if (hE.estado !== 'libre' || hS.estado !== 'libre') continue;
+    hE.estado = 'empalme'; hE.empalmeCon = { kind: 'fibra', fibraId: salida.id, hiloIdx: i };
+    hS.estado = 'empalme'; hS.empalmeCon = { kind: 'fibra', fibraId: entrada.id, hiloIdx: i };
+    hechos++;
+  }
+  renderEmpalmeFibras();
+  const original = '🔀 Pase directo (Entrada → Salida)';
+  btn.textContent = hechos > 0 ? ('✓ ' + hechos + ' hilo(s) pasados directo') : 'No hay hilos libres para pasar';
+  setTimeout(function () { btn.textContent = original; }, 2200);
+}
+function empalmeRefKey(ref) {
+  if (ref.kind === 'fibra') return 'fibra:' + ref.fibraId + ':' + ref.hiloIdx;
+  return 'splitter:' + ref.splitterId + ':' + ref.port;
+}
+function abrirCharolaView() {
+  if (!empalmeCajaActual) return;
+  const cont = document.getElementById('charola-svg-container');
+  cont.innerHTML = '';
+  cont.appendChild(buildCharolaSVG());
+  document.getElementById('charola-modal-overlay').style.display = 'block';
+}
+function cerrarCharolaView() {
+  document.getElementById('charola-modal-overlay').style.display = 'none';
+}
+function buildCharolaSVG() {
+  const rowH = 20;
+  const gap = 14;
+  const W = 340;
+  const fibras = empalmeCajaActual.fibras || [];
+  const splitters = empalmeCajaActual.splitters || [];
+  const leftFibras = fibras.filter(function (f) { const k = empalmeInferKind(f); return k === 'entrada' || k === 'salida'; });
+  const rightFibras = fibras.filter(function (f) { const k = empalmeInferKind(f); return k === 'dist' || k === 'clientes'; });
+
+  const portsById = {};
+  let leftY = 50;
+  leftFibras.forEach(function (f) {
+    f.hilos.forEach(function (h, idx) {
+      portsById['fibra:' + f.id + ':' + idx] = { x: 55, y: leftY, color: COLORS_HILO[idx % 12].h, hilo: h, kind: f.kind };
+      leftY += rowH;
+    });
+    leftY += gap;
+  });
+  let rightY = 50;
+  rightFibras.forEach(function (f) {
+    f.hilos.forEach(function (h, idx) {
+      portsById['fibra:' + f.id + ':' + idx] = { x: W - 55, y: rightY, color: COLORS_HILO[idx % 12].h, hilo: h, kind: f.kind };
+      rightY += rowH;
+    });
+    rightY += gap;
+  });
+  let spY = Math.max(leftY, rightY) + 20;
+  const spLabels = [];
+  const spBodies = [];
+  splitters.forEach(function (sp) {
+    const midY = spY + (sp.ratio * rowH) / 2;
+    portsById['splitter:' + sp.id + ':IN'] = { x: W / 2 - 18, y: midY, color: '#FFC107', hilo: sp.entrada };
+    sp.salidas.forEach(function (sal, idx) {
+      portsById['splitter:' + sp.id + ':' + idx] = { x: W / 2 + 18, y: spY + idx * rowH, color: COLORS_HILO[idx % 12].h, hilo: sal };
+    });
+    spBodies.push({ midY: midY, ratio: sp.ratio, spY: spY });
+    spLabels.push({ y: spY - 6, label: 'Splitter 1:' + sp.ratio });
+    spY += sp.ratio * rowH + gap;
+  });
+  const H = Math.max(leftY, rightY, spY, 160) + 30;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', '100%');
+  svg.style.display = 'block';
+  svg.style.background = 'linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.05))';
+  svg.style.border = '1px solid var(--border)';
+  svg.style.borderRadius = '14px';
+
+  const tray = document.createElementNS(NS, 'rect');
+  tray.setAttribute('x', 8); tray.setAttribute('y', 8);
+  tray.setAttribute('width', W - 16); tray.setAttribute('height', H - 16);
+  tray.setAttribute('rx', 18);
+  tray.setAttribute('fill', 'none');
+  tray.setAttribute('stroke', 'rgba(143,166,201,.5)');
+  tray.setAttribute('stroke-width', '2');
+  svg.appendChild(tray);
+
+  // Pinzas: una por cada fibra, del lado que le corresponde
+  function addClamp(x, y0, y1, label, align) {
+    const clamp = document.createElementNS(NS, 'rect');
+    clamp.setAttribute('x', x - 6); clamp.setAttribute('y', y0 - 8);
+    clamp.setAttribute('width', 12); clamp.setAttribute('height', (y1 - y0) + 16);
+    clamp.setAttribute('rx', 4);
+    clamp.setAttribute('fill', '#2A3B5C');
+    clamp.setAttribute('stroke', 'rgba(143,166,201,.6)');
+    svg.appendChild(clamp);
+    const txt = document.createElementNS(NS, 'text');
+    txt.setAttribute('x', align === 'left' ? x - 14 : x + 14);
+    txt.setAttribute('y', y0 - 4);
+    txt.setAttribute('text-anchor', align === 'left' ? 'end' : 'start');
+    txt.setAttribute('font-size', '9');
+    txt.setAttribute('fill', 'var(--text-dim)');
+    txt.textContent = label;
+    svg.appendChild(txt);
+  }
+  leftFibras.forEach(function (f) {
+    const ys = f.hilos.map(function (h, idx) { return portsById['fibra:' + f.id + ':' + idx].y; });
+    if (ys.length) addClamp(30, ys[0], ys[ys.length - 1], f.nombre, 'left');
+  });
+  rightFibras.forEach(function (f) {
+    const ys = f.hilos.map(function (h, idx) { return portsById['fibra:' + f.id + ':' + idx].y; });
+    if (ys.length) addClamp(W - 30, ys[0], ys[ys.length - 1], f.nombre, 'right');
+  });
+  spLabels.forEach(function (s) {
+    const txt = document.createElementNS(NS, 'text');
+    txt.setAttribute('x', W / 2); txt.setAttribute('y', s.y);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('font-size', '9');
+    txt.setAttribute('fill', '#C084E8');
+    txt.textContent = s.label;
+    svg.appendChild(txt);
+  });
+
+  // Cuerpo del splitter (rectángulo morado) + abanico hacia cada salida,
+  // igual que el ícono del splitter en el resto de la app.
+  spBodies.forEach(function (b) {
+    for (let idx = 0; idx < b.ratio; idx++) {
+      const outY = b.spY + idx * rowH;
+      const fan = document.createElementNS(NS, 'path');
+      fan.setAttribute('d', 'M ' + (W / 2 + 9) + ' ' + b.midY + ' C ' + (W / 2 + 20) + ' ' + b.midY + ', ' + (W / 2 + 5) + ' ' + outY + ', ' + (W / 2 + 18) + ' ' + outY);
+      fan.setAttribute('stroke', 'rgba(143,166,201,.4)');
+      fan.setAttribute('stroke-width', '1');
+      fan.setAttribute('fill', 'none');
+      svg.appendChild(fan);
+    }
+    const inLine = document.createElementNS(NS, 'line');
+    inLine.setAttribute('x1', W / 2 - 18); inLine.setAttribute('y1', b.midY);
+    inLine.setAttribute('x2', W / 2 - 9); inLine.setAttribute('y2', b.midY);
+    inLine.setAttribute('stroke', '#FFC107');
+    inLine.setAttribute('stroke-width', '1.5');
+    svg.appendChild(inLine);
+    const body = document.createElementNS(NS, 'rect');
+    body.setAttribute('x', W / 2 - 9); body.setAttribute('y', b.midY - 9);
+    body.setAttribute('width', 18); body.setAttribute('height', 18);
+    body.setAttribute('rx', 4);
+    body.setAttribute('fill', '#8E24AA');
+    body.setAttribute('stroke', '#5E1670');
+    body.setAttribute('stroke-width', '1');
+    svg.appendChild(body);
+  });
+
+  // Puntitos de cada hilo — los puertos cliente se dibujan como el
+  // acoplador verde real (SC/APC), el resto como el hilo de color.
+  Object.keys(portsById).forEach(function (key) {
+    const p = portsById[key];
+    if (p.kind === 'clientes') {
+      const adap = document.createElementNS(NS, 'rect');
+      adap.setAttribute('x', p.x - 5); adap.setAttribute('y', p.y - 4);
+      adap.setAttribute('width', 10); adap.setAttribute('height', 8);
+      adap.setAttribute('rx', 1.5);
+      adap.setAttribute('fill', '#5FD86B');
+      adap.setAttribute('stroke', '#2E8B3D');
+      adap.setAttribute('stroke-width', '0.8');
+      svg.appendChild(adap);
+      const slot = document.createElementNS(NS, 'rect');
+      slot.setAttribute('x', p.x - 1.2); slot.setAttribute('y', p.y - 2.5);
+      slot.setAttribute('width', 2.4); slot.setAttribute('height', 5);
+      slot.setAttribute('fill', '#245C2C');
+      svg.appendChild(slot);
+    } else {
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); dot.setAttribute('r', 3);
+      dot.setAttribute('fill', p.color);
+      svg.appendChild(dot);
+    }
+  });
+
+  // Rutas de fusión: una curva por cada empalme real ya hecho
+  const dibujadas = {};
+  Object.keys(portsById).forEach(function (key) {
+    const p = portsById[key];
+    if (!p.hilo || p.hilo.estado !== 'empalme' || !p.hilo.empalmeCon) return;
+    const otherKey = empalmeRefKey(p.hilo.empalmeCon);
+    const pairKey = key < otherKey ? key + '|' + otherKey : otherKey + '|' + key;
+    if (dibujadas[pairKey]) return;
+    dibujadas[pairKey] = true;
+    const q = portsById[otherKey];
+    if (!q) return;
+    const gradId = 'chgrad_' + pairKey.replace(/[^a-zA-Z0-9]/g, '_');
+    const defs = document.createElementNS(NS, 'defs');
+    const grad = document.createElementNS(NS, 'linearGradient');
+    grad.setAttribute('id', gradId);
+    grad.setAttribute('x1', p.x); grad.setAttribute('y1', p.y); grad.setAttribute('x2', q.x); grad.setAttribute('y2', q.y);
+    grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    const s1 = document.createElementNS(NS, 'stop'); s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', p.color);
+    const s2 = document.createElementNS(NS, 'stop'); s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', q.color);
+    grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); svg.appendChild(defs);
+    const dx = (q.x - p.x) * 0.5;
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', 'M ' + p.x + ' ' + p.y + ' C ' + (p.x + dx) + ' ' + p.y + ', ' + (q.x - dx) + ' ' + q.y + ', ' + q.x + ' ' + q.y);
+    path.setAttribute('stroke', 'url(#' + gradId + ')');
+    path.setAttribute('stroke-width', '1.8');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('opacity', '0.9');
+    svg.appendChild(path);
+  });
+
+  const wrap = document.createElement('div');
+  wrap.appendChild(svg);
+  const note = document.createElement('div');
+  note.className = 'el-modal-info';
+  note.style.marginTop = '10px';
+  note.textContent = 'Vista generada a partir de los empalmes ya hechos en "Hilos y empalmes". Las pinzas de los costados representan dónde se sujeta cada cable.';
+  wrap.appendChild(note);
+  return wrap;
+}
+
 function cerrarModalElemento() {
   document.getElementById('el-modal-overlay').classList.remove('open');
   mapaModalTarget = null; mapaModalOnSave = null; mapaModalOnDelete = null;
@@ -2014,7 +2842,7 @@ function proyPopupHtml(el) {
 }
 
 function proyAddMarker(p, el) {
-  const marker = L.marker([el.lat, el.lng], { icon: mapaMakeIcon(el.type), draggable: true }).addTo(window._leafletMapProyecto);
+  const marker = L.marker([el.lat, el.lng], { icon: mapaMakeIcon(el), draggable: true }).addTo(window._leafletMapProyecto);
   marker.bindPopup(proyPopupHtml(el));
   marker.on('popupopen', function () {
     const del = document.querySelector('.popup-del[data-pid="' + el.id + '"]');
@@ -2042,6 +2870,9 @@ function proyCrearElemento(p, type, lat, lng) {
   const n = proyElements.filter(function (e) { return e.type === type; }).length + 1;
   const prefix = { poste: 'P', nap: 'NAP', caja: 'C', cliente: 'JAAD', crucero: 'CR', sitio: 'SITE' }[type];
   const el = { id: 'pel_' + Date.now() + '_' + Math.floor(Math.random() * 1000), type: type, lat: lat, lng: lng, nombre: prefix + '-' + String(n).padStart(3, '0') };
+  if (type === 'poste') el.estado = 'existente';
+  if (type === 'caja') el.fibras = [];
+  if (type === 'nap') el.puertos = Array.from({ length: 16 }, function () { return { ocupado: false, cliente: '' }; });
   proyElements.push(el);
   proyAddMarker(p, el);
   proyPersistir(p);
@@ -2058,17 +2889,20 @@ function proyPersistir(p) {
 }
 
 function proyAddFiberLine(p, fl) {
-  const meta = MAPA_FIBER_META[fl.tipo];
-  const poly = L.polyline(fl.coords, { color: meta.color, weight: meta.weight, dashArray: meta.dash }).addTo(window._leafletMapProyecto);
-  poly.bindPopup(mapaFiberPopupHtml(fl));
-  poly.on('popupopen', function () {
-    const del = document.querySelector('.popup-del[data-fid="' + fl.id + '"]');
-    if (del) del.onclick = function () { proyEliminarFibra(p, fl.id); };
+  const layers = mapaBuildFiberLayers(fl);
+  const html = mapaFiberPopupHtml(fl);
+  layers.forEach(function (poly) {
+    poly.addTo(window._leafletMapProyecto);
+    poly.bindPopup(html);
+    poly.on('popupopen', function () {
+      const del = document.querySelector('.popup-del[data-fid="' + fl.id + '"]');
+      if (del) del.onclick = function () { proyEliminarFibra(p, fl.id); };
+    });
   });
-  proyFiberLayers[fl.id] = poly;
+  proyFiberLayers[fl.id] = layers;
 }
 function proyEliminarFibra(p, id) {
-  if (proyFiberLayers[id]) { window._leafletMapProyecto.removeLayer(proyFiberLayers[id]); delete proyFiberLayers[id]; }
+  if (proyFiberLayers[id]) { proyFiberLayers[id].forEach(function (l) { window._leafletMapProyecto.removeLayer(l); }); delete proyFiberLayers[id]; }
   p.fibrasMapa = p.fibrasMapa.filter(function (f) { return f.id !== id; });
   proyFiberLines = p.fibrasMapa;
   proyPersistirFibras(p);
@@ -2335,7 +3169,9 @@ function renderProyectoDetalle() {
       '<div class="hint-bar" id="proy-hint-bar">Modo agregar: <b id="proy-hint-type">Poste</b> — toca el mapa para colocarlo. <span class="hint-cancel" onclick="proyCancelarModoAgregar()">Cancelar</span></div>' +
       '<div class="map-toolbar" id="proy-fiber-toolbar">' +
         '<span class="map-toolbar-label">Trazar fibra</span>' +
-        '<div class="map-add-chip" data-ftype="troncal" onclick="proyActivarModoFibra(\'troncal\')"><span class="dot" style="background:#29C6F6"></span> Troncal</div>' +
+        '<div class="map-add-chip" data-ftype="troncal12" onclick="proyActivarModoFibra(\'troncal12\')"><span class="dot" style="background:#E91E8C"></span> Troncal 12H</div>' +
+        '<div class="map-add-chip" data-ftype="troncal" onclick="proyActivarModoFibra(\'troncal\')"><span class="dot" style="background:#29C6F6"></span> Troncal 48H</div>' +
+        '<div class="map-add-chip" data-ftype="troncal96" onclick="proyActivarModoFibra(\'troncal96\')"><span class="dot" style="background:#6A1B9A"></span> Troncal 96H</div>' +
         '<div class="map-add-chip" data-ftype="distribucion" onclick="proyActivarModoFibra(\'distribucion\')"><span class="dot" style="background:#3B7BF0"></span> Distribución</div>' +
         '<div class="map-add-chip" data-ftype="acometida" onclick="proyActivarModoFibra(\'acometida\')"><span class="dot" style="background:#8B5CF6"></span> Acometida</div>' +
       '</div>' +
@@ -2994,32 +3830,72 @@ async function recolectarDatosInstalacion() {
 async function construirPDFInstalacion(t, cliente, datos) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  let y = 18;
+  const pageW = doc.internal.pageSize.getWidth();
+  const NAVY = [10, 24, 48];
+  const NAVY2 = [18, 42, 78];
+  const ACCENT = [41, 198, 246];
+  const TEXTD = [30, 45, 70];
+  const TEXTDIM = [110, 122, 145];
+  const GREEN = [46, 204, 113];
 
-  doc.setFontSize(16); doc.text('Reporte de instalación — JAAD Telecom', 14, y); y += 10;
-  doc.setFontSize(10);
-  doc.text('Ticket: #' + (t ? t.id : '—') + ' · ' + (t ? t.titulo : ''), 14, y); y += 6;
-  doc.text('Fecha: ' + (t ? t.fecha : ''), 14, y); y += 6;
-  if (cliente) {
-    doc.text('Cliente: ' + cliente.nombre, 14, y); y += 6;
-    doc.text('Dirección: ' + cliente.direccion, 14, y); y += 6;
-    doc.text('Plan: ' + cliente.plan, 14, y); y += 6;
-    if (cliente.napNombre) { doc.text('NAP / puerto: ' + cliente.napNombre + ' · puerto ' + (cliente.puerto + 1), 14, y); y += 6; }
+  // ---- Encabezado con marca ----
+  doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+  doc.rect(0, 0, pageW, 32, 'F');
+  const logoDataUrl = (document.querySelector('.brand-mark img') || {}).src || null;
+  if (logoDataUrl) {
+    try { doc.addImage(logoDataUrl, 'JPEG', 14, 6, 20, 20); } catch (e) {}
   }
-  if (datos.serie) { doc.text('Número de serie / MAC: ' + datos.serie, 14, y); y += 6; }
-  y += 4;
-
-  doc.setFontSize(12); doc.text('Checklist confirmado:', 14, y); y += 6;
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(15);
+  doc.text('JAAD Telecom', 40, 15);
   doc.setFontSize(10);
-  ['ONT/ONU instalada y configurada', 'Señal óptica dentro del rango', 'Servicio probado (navegación / speedtest)', 'Cliente informado y comprobante entregado']
-    .forEach(function (txt) { doc.text('✓ ' + txt, 16, y); y += 6; });
-  y += 4;
+  doc.setTextColor(ACCENT[0], ACCENT[1], ACCENT[2]);
+  doc.text('Reporte de instalación', 40, 22);
+  doc.setTextColor(TEXTD[0], TEXTD[1], TEXTD[2]);
 
-  doc.setFontSize(12); doc.text('Evidencia fotográfica:', 14, y); y += 6;
+  let y = 42;
+  function etiquetaValor(etiqueta, valor) {
+    doc.setFontSize(9); doc.setTextColor(TEXTDIM[0], TEXTDIM[1], TEXTDIM[2]);
+    doc.text(etiqueta, 14, y);
+    doc.setFontSize(10.5); doc.setTextColor(TEXTD[0], TEXTD[1], TEXTD[2]);
+    doc.text(String(valor), 14, y + 5);
+    y += 12;
+  }
+
+  etiquetaValor('TICKET', '#' + (t ? t.id : '—') + ' · ' + (t ? t.titulo : ''));
+  etiquetaValor('FECHA', t ? t.fecha : '');
+  if (cliente) {
+    etiquetaValor('CLIENTE', cliente.nombre);
+    etiquetaValor('DIRECCIÓN', cliente.direccion);
+    etiquetaValor('PLAN', cliente.plan);
+    if (cliente.napNombre) etiquetaValor('NAP / PUERTO', cliente.napNombre + ' · puerto ' + (cliente.puerto + 1));
+  }
+  if (datos.serie) etiquetaValor('NÚMERO DE SERIE / MAC', datos.serie);
+
+  y += 2;
+  doc.setDrawColor(225, 230, 238); doc.line(14, y, pageW - 14, y); y += 10;
+
+  doc.setFontSize(12); doc.setTextColor(NAVY2[0], NAVY2[1], NAVY2[2]);
+  doc.text('Checklist confirmado', 14, y); y += 7;
+  doc.setFontSize(10); doc.setTextColor(TEXTD[0], TEXTD[1], TEXTD[2]);
+  ['ONT/ONU instalada y configurada', 'Señal óptica dentro del rango', 'Servicio probado (navegación / speedtest)', 'Cliente informado y comprobante entregado']
+    .forEach(function (txt) {
+      doc.setTextColor(GREEN[0], GREEN[1], GREEN[2]); doc.text('✓', 16, y);
+      doc.setTextColor(TEXTD[0], TEXTD[1], TEXTD[2]); doc.text(txt, 22, y);
+      y += 7;
+    });
+  y += 6;
+
+  doc.setDrawColor(225, 230, 238); doc.line(14, y, pageW - 14, y); y += 10;
+
+  doc.setFontSize(12); doc.setTextColor(NAVY2[0], NAVY2[1], NAVY2[2]);
+  doc.text('Evidencia fotográfica', 14, y); y += 8;
   const etiquetasFoto = ['ONT instalada', 'Router / equipo', 'Fachada / poste'];
   let x = 14;
   const boxW = 58, boxH = 50;
   for (let i = 0; i < 3; i++) {
+    doc.setFillColor(244, 246, 250);
+    doc.roundedRect(x, y, boxW, boxH, 2, 2, 'F');
     const dataUrl = datos.fotos[i];
     if (dataUrl) {
       try {
@@ -3029,19 +3905,24 @@ async function construirPDFInstalacion(t, cliente, datos) {
         doc.addImage(dataUrl, 'JPEG', x + (boxW - w) / 2, y + (boxH - h) / 2, w, h);
       } catch (e) {}
     }
-    doc.setFontSize(8);
+    doc.setFontSize(8.5); doc.setTextColor(TEXTDIM[0], TEXTDIM[1], TEXTDIM[2]);
     doc.text(etiquetasFoto[i], x, y + boxH + 5);
     x += boxW + 4;
   }
-  y += boxH + 14;
+  y += boxH + 16;
 
-  if (y > 210) { doc.addPage(); y = 20; }
-  doc.setFontSize(12); doc.text('Firma del cliente:', 14, y); y += 4;
+  if (y > 200) { doc.addPage(); y = 20; }
+  doc.setFontSize(12); doc.setTextColor(NAVY2[0], NAVY2[1], NAVY2[2]);
+  doc.text('Firma del cliente', 14, y); y += 5;
+  // Fondo oscuro (igual que en la app) para que la firma, dibujada en
+  // blanco, se pueda ver — sobre una hoja blanca sería invisible.
+  doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+  doc.roundedRect(14, y, 90, 38, 3, 3, 'F');
   if (datos.firma) {
-    doc.addImage(datos.firma, 'PNG', 14, y, 80, 35);
+    doc.addImage(datos.firma, 'PNG', 17, y + 3, 84, 32);
   }
-  y += 40;
-  doc.setFontSize(9);
+  y += 46;
+  doc.setFontSize(9); doc.setTextColor(TEXTDIM[0], TEXTDIM[1], TEXTDIM[2]);
   doc.text('Firmado por: ' + (cliente ? cliente.nombre : '—'), 14, y);
 
   return doc;
